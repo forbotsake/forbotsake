@@ -124,12 +124,20 @@ Read `$INSTALL_DIR/CHANGELOG.md` and show the entries between old and new versio
 
 Tell the user: "forbotsake upgraded to v{new}. Here's what changed: ..."
 
-### Step 6: Verify
+### Step 6: Refresh symlinks
+
+After upgrading, refresh symlinks to pick up any new skills added in the new version:
 
 ```bash
-# Verify skills are still discoverable
-SKILL_COUNT=$(find "$INSTALL_DIR" -maxdepth 2 -name "SKILL.md" -not -path "*/forbotsake-upgrade/*" | wc -l | tr -d ' ')
-echo "Skills found: $SKILL_COUNT"
+bash "$INSTALL_DIR/bin/sync-links.sh"
 ```
 
-If skill count is 0, something went wrong. Warn the user and suggest reinstalling.
+### Step 7: Verify
+
+```bash
+# Verify installation health
+bash "$INSTALL_DIR/bin/sync-links.sh" --check
+```
+
+If the check reports missing skills, re-run `bash "$INSTALL_DIR/bin/sync-links.sh"` to repair.
+If that fails, suggest reinstalling: `bash "$INSTALL_DIR/bin/install.sh"`

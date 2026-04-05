@@ -14,11 +14,23 @@ You can build the product. This helps you sell it.
 
 ## Install (30 seconds)
 
+**Option 1 — one-liner:**
 ```bash
-git clone --single-branch --depth 1 https://github.com/forbotsake/forbotsake.git ~/.claude/skills/forbotsake
+bash <(curl -fsSL https://raw.githubusercontent.com/forbotsake/forbotsake/main/bin/install.sh)
 ```
 
-That's it. No build step. No dependencies. Pure markdown.
+**Option 2 — manual:**
+```bash
+git clone --single-branch --depth 1 https://github.com/forbotsake/forbotsake.git ~/.claude/skills/forbotsake
+bash ~/.claude/skills/forbotsake/bin/sync-links.sh
+```
+
+No build step. No dependencies. Pure markdown.
+
+**Verify it worked:**
+```bash
+bash ~/.claude/skills/forbotsake/bin/sync-links.sh --check
+```
 
 ## The Pipeline
 
@@ -44,7 +56,7 @@ UNDERSTAND → CHALLENGE → RESEARCH → PLAN → CREATE → REVIEW → SHIP �
 
 1. Install (see above)
 2. Open your project in Claude Code
-3. Type `/forbotsake-marketing-start`
+3. Type `/forbotsake` to see all available skills (or go straight to `/forbotsake-marketing-start`)
 4. Answer 5 questions about your product
 5. Get a strategy.md with your positioning, ICP, channel strategy, and first move
 
@@ -76,10 +88,25 @@ Type `/forbotsake-upgrade` in Claude Code. It detects your install type, pulls t
 
 Or manually:
 ```bash
-cd ~/.claude/skills/forbotsake && git pull
+cd ~/.claude/skills/forbotsake && git pull && bash bin/sync-links.sh
 ```
 
 Every forbotsake skill checks for updates automatically. When a new version is available, you'll see a notice before the skill runs. Your strategy.md and other output files live in your project, not in the plugin directory. Upgrades are safe.
+
+## Troubleshooting
+
+**Skills not showing up after install?**
+Run: `bash ~/.claude/skills/forbotsake/bin/sync-links.sh`
+This creates the symlinks Claude Code needs to discover skills.
+
+**`/forbotsake-*` commands not found?**
+Start a new Claude Code session after installing. Skills are loaded at session start.
+
+**Verify installation:**
+Run: `bash ~/.claude/skills/forbotsake/bin/sync-links.sh --check`
+
+**Uninstall:**
+Run: `bash ~/.claude/skills/forbotsake/bin/uninstall.sh`
 
 ## Contributing
 

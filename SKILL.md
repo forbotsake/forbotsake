@@ -54,12 +54,19 @@ UNDERSTAND → CHALLENGE → RESEARCH → PLAN → CREATE → REVIEW → SHIP �
 | 5 | PLAN | `/forbotsake-content-plan` | Content calendar: themes, formats, cadence |
 | 6 | CREATE | `/forbotsake-create` | Write actual content: X threads, posts, emails |
 | 7 | REVIEW | `/forbotsake-content-check` | Pre-publish check: brand voice, messaging |
-| 8 | SHIP | `/forbotsake-publish` | Post to X, schedule, set up automation |
+| 8 | SHIP | `/forbotsake-publish` | Format for platform, copy-paste ready |
 | 9 | MEASURE | `/forbotsake-retro` | Weekly retro: what worked, what to change |
+
+### One Command: `/forbotsake-go`
+
+Don't know where to start? `/forbotsake-go` detects your pipeline state and runs
+remaining stages automatically. One command from zero to published.
 
 ### Routing
 
-- If this is the user's first time and no `strategy.md` exists, suggest `/forbotsake-marketing-start`.
-- If `strategy.md` exists but no `content-calendar.md`, suggest the next pipeline step.
+- "do marketing", "market this", "I need to do marketing", "run the pipeline" → invoke `/forbotsake-go`
+- "ship my marketing", "commit and publish", "land my content" → invoke `/forbotsake-go`
+- If this is the user's first time and no `strategy.md` exists, suggest `/forbotsake-go` (it starts from strategy).
+- If `strategy.md` exists but no content, suggest `/forbotsake-go` (it picks up from create).
 - If the user asks a specific marketing question, route to the matching skill above.
 - If the user asks to upgrade, suggest `/forbotsake-upgrade`.

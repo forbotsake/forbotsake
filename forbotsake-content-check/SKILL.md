@@ -39,6 +39,11 @@ _UPD=""
 _BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 echo "BRANCH: $_BRANCH"
 
+# Orchestrated mode (invoked by forbotsake-go, propagated via file flag)
+_ORCH_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+FORBOTSAKE_ORCHESTRATED=$(cat "$_ORCH_FILE" 2>/dev/null || echo 0)
+echo "ORCHESTRATED: $FORBOTSAKE_ORCHESTRATED"
+
 # Check for strategy.md
 if [ -f strategy.md ]; then
   echo "STRATEGY_EXISTS: yes"
@@ -90,6 +95,15 @@ If `CONTENT_DIR` is `missing`:
 Use AskUserQuestion.
 
 ## Phase 1: Select the Content to Review
+
+**Orchestrated mode (`ORCHESTRATED` is `1`):**
+- Auto-select the most recently created content file with `status: draft` in frontmatter. Review ONE file at a time (the skill's review flow is designed for single-file review). If multiple drafts exist, review only the newest one.
+- If no draft files, review the most recently modified content file
+- Skip the file selection AskUserQuestion
+- In Phase 4: if all dimensions pass, proceed silently. If any fail, auto-apply suggested fixes (equivalent to option A) and re-run. If re-review still fails after 2 iterations, mark as `reviewed-override` and continue.
+- Skip Phase 6 (Next Steps) — the orchestrator handles what's next.
+
+**Interactive mode (`ORCHESTRATED` is `0`):**
 
 If content files exist, ask via AskUserQuestion:
 
@@ -298,7 +312,9 @@ Use the Edit tool to change `status: draft` to:
 
 ## Phase 6: Next Steps
 
-Tell the user:
+**Orchestrated mode (`ORCHESTRATED` is `1`):** Skip this phase entirely. Confirm: "Review complete for `content/{filename}`. Status: {reviewed/revised/reviewed-override}." Then stop.
+
+**Interactive mode (`ORCHESTRATED` is `0`):** Tell the user:
 
 > "Review complete for `content/{filename}`.
 >

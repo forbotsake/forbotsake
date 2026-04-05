@@ -46,6 +46,11 @@ _UPD=""
 _BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 echo "BRANCH: $_BRANCH"
 
+# Orchestrated mode (invoked by forbotsake-go, propagated via file flag)
+_ORCH_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+FORBOTSAKE_ORCHESTRATED=$(cat "$_ORCH_FILE" 2>/dev/null || echo 0)
+echo "ORCHESTRATED: $FORBOTSAKE_ORCHESTRATED"
+
 # Check for strategy.md
 if [ -f strategy.md ]; then
   echo "STRATEGY: yes"
@@ -96,6 +101,17 @@ If CHROME_AVAILABLE is yes: the user can choose POST mode (auto-post via Chrome)
 If CHROME_AVAILABLE is no: silently default to COPY mode. Mention once: "Auto-posting available with the Claude for Chrome extension. Using copy-paste mode."
 
 ## Phase 1: Select Content and Platform
+
+**Orchestrated mode (`ORCHESTRATED` is `1`):**
+- Auto-select content files: format ALL content files with `status: reviewed`, `status: revised`, or `status: reviewed-override` in frontmatter
+- Auto-select platform from each file's `channel:` frontmatter field
+- If a file has no channel specified, use the highest-scored channel from strategy.md
+- Skip the content/platform selection AskUserQuestion
+- In Phase 4: skip "Want me to format this for another platform too?" — just format and log
+- After logging to published-log.md, update each published content file's frontmatter from `status: reviewed` (or `revised`/`reviewed-override`) to `status: published`. This prevents re-publish loops when forbotsake-go runs again.
+- Skip Phase 5 (Next Steps) — the orchestrator handles what's next
+
+**Interactive mode (`ORCHESTRATED` is `0`):**
 
 Read `strategy.md` to understand the channel strategy and ICP.
 
@@ -509,7 +525,9 @@ After logging, update the source content file's frontmatter status based on the 
 
 ## Phase 6: Next Steps
 
-Tell the user:
+**Orchestrated mode (`ORCHESTRATED` is `1`):** Skip this phase entirely. Confirm: "Formatted and logged {N} pieces to published-log.md." Then stop.
+
+**Interactive mode (`ORCHESTRATED` is `0`):** Tell the user:
 
 > "Logged to published-log.md. {If POST mode: 'Posted to {platform} as {handle}.'}
 >

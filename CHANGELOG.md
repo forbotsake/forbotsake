@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0 (2026-04-05)
+
+### Added
+- `/forbotsake-go` — one command from zero to published. Detects your marketing pipeline state (strategy, content, review status) and runs remaining stages automatically. Type `/forbotsake-go` and get content created, reviewed, formatted, committed, and pushed without thinking about which skill to invoke.
+- Orchestrated mode for sub-skills. When invoked by `/forbotsake-go`, sub-skills auto-select defaults, skip interactive prompts where possible, and return control cleanly. The draft approval loop in `/forbotsake-create` is preserved (the high-value interaction).
+- State file resume: if a session crashes mid-pipeline, `/forbotsake-go` picks up where it left off.
+- `--dry-run` mode: see what `/forbotsake-go` would do without invoking any sub-skills.
+- `knowledge/published-log-schema.md` — single source of truth for the log format shared by publish, go, and retro.
+
+### Changed
+- Default entry point is now `/forbotsake-go` instead of `/forbotsake-marketing-start`. Individual skills remain available for users who want control.
+- Routing updated: "do marketing", "market this", "ship my marketing" routes to `/forbotsake-go`.
+- `/forbotsake-publish` now updates content frontmatter to `status: published` after logging, preventing re-publish loops.
+
 ## 0.2.0 (2026-04-05)
 
 ### Added

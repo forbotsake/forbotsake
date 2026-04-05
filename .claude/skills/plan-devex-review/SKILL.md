@@ -1,0 +1,1 @@
+/Users/hansel/conductor/repos/forbotsake/.claude/skills/gstack/plan-devex-review/SKILL.md

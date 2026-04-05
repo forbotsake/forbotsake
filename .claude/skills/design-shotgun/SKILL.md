@@ -1,0 +1,1 @@
+/Users/hansel/conductor/repos/forbotsake/.claude/skills/gstack/design-shotgun/SKILL.md

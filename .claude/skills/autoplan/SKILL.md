@@ -1,0 +1,1 @@
+/Users/hansel/conductor/repos/forbotsake/.claude/skills/gstack/autoplan/SKILL.md

@@ -70,8 +70,10 @@ fi
 # Today's date for file naming
 echo "TODAY: $(date +%Y-%m-%d)"
 
-# Orchestrated mode (invoked by forbotsake-go)
-echo "ORCHESTRATED: ${FORBOTSAKE_ORCHESTRATED:-0}"
+# Orchestrated mode (invoked by forbotsake-go, propagated via file flag)
+_ORCH_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+FORBOTSAKE_ORCHESTRATED=$(cat "$_ORCH_FILE" 2>/dev/null || echo 0)
+echo "ORCHESTRATED: $FORBOTSAKE_ORCHESTRATED"
 
 # Check for session resume file
 _SESSION_FILE="$FORBOTSAKE_HOME/session-create-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").json"

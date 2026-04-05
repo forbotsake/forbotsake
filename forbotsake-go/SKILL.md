@@ -38,9 +38,11 @@ _UPD=""
 _BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 echo "BRANCH: $_BRANCH"
 
-# Set orchestrated mode for sub-skills
-export FORBOTSAKE_ORCHESTRATED=1
+# Set orchestrated mode for sub-skills via file flag (env vars don't propagate across Skill tool invocations)
+_ORCH_FLAG="$FORBOTSAKE_HOME/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+echo "1" > "$_ORCH_FLAG"
 echo "ORCHESTRATED: 1"
+echo "ORCH_FLAG: $_ORCH_FLAG"
 
 # Pipeline state detection
 echo "--- PIPELINE STATE ---"
@@ -65,8 +67,9 @@ if [ -d content ] && ls content/*.md 1>/dev/null 2>&1; then
   CONTENT_COUNT=$(ls -1 content/*.md 2>/dev/null | wc -l | tr -d ' ')
   echo "CONTENT_COUNT: $CONTENT_COUNT"
   # Check review status via frontmatter
-  DRAFT_COUNT=$(grep -l 'status: draft' content/*.md 2>/dev/null | wc -l | tr -d ' ')
-  REVIEWED_COUNT=$(grep -l 'status: reviewed\|status: revised\|status: reviewed-override' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  DRAFT_COUNT=$(grep -l -e 'status: draft' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  REVIEWED_COUNT=$(grep -l -e 'status: reviewed' -e 'status: revised' -e 'status: reviewed-override' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  PUBLISHED_COUNT=$(grep -l -e 'status: published' content/*.md 2>/dev/null | wc -l | tr -d ' ')
   echo "DRAFT_COUNT: $DRAFT_COUNT"
   echo "REVIEWED_COUNT: $REVIEWED_COUNT"
   ls -1t content/*.md 2>/dev/null | head -5
@@ -99,6 +102,8 @@ fi
 
 echo "--- END PIPELINE STATE ---"
 ```
+
+**Recursion guard:** If `ORCHESTRATED` is already `1` (the flag file exists before this skill created it), this skill is being invoked recursively. Say: "forbotsake-go is already running. Skipping to avoid recursion." Then stop.
 
 If preamble shows `UPGRADE_AVAILABLE <old> <new>`: read `$_FBS_ROOT/forbotsake-upgrade/SKILL.md`
 and follow the "Inline upgrade flow" section Step 1 only. If upgrade proceeds, continue after.
@@ -148,6 +153,7 @@ The skill will run in orchestrated mode (FORBOTSAKE_ORCHESTRATED=1):
 
 After it returns, save state:
 ```bash
+_STATE_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
 echo "stage: strategy-complete" > "$_STATE_FILE"
 echo "timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$_STATE_FILE"
 ```
@@ -171,6 +177,7 @@ The skill will run in orchestrated mode:
 
 After it returns, save state:
 ```bash
+_STATE_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
 echo "stage: create-complete" > "$_STATE_FILE"
 echo "timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$_STATE_FILE"
 echo "content_files: $(ls -1t content/*.md 2>/dev/null | head -3 | tr '\n' ',')" >> "$_STATE_FILE"
@@ -190,6 +197,7 @@ The skill will run in orchestrated mode:
 
 After it returns, save state:
 ```bash
+_STATE_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
 echo "stage: review-complete" > "$_STATE_FILE"
 echo "timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$_STATE_FILE"
 ```
@@ -212,25 +220,33 @@ The skill will run in orchestrated mode:
 After publish completes:
 
 ```bash
-# Stage marketing files
-git add strategy.md content/ published-log.md content-calendar.md 2>/dev/null
+# Stage marketing files (only .md files from content/, not binaries or other artifacts)
+git add strategy.md content/*.md published-log.md content-calendar.md 2>/dev/null
 git add forbotsake-strategy.md forbotsake-content-calendar.md 2>/dev/null
 
 # Check if there are changes to commit
-git diff --cached --quiet 2>/dev/null
+if ! git diff --cached --quiet 2>/dev/null; then
+  echo "STAGED_CHANGES: yes"
+else
+  echo "STAGED_CHANGES: no"
+fi
+
+_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+echo "GIT_BRANCH: $_BRANCH"
 ```
 
-If there are staged changes:
+If `STAGED_CHANGES` is `yes`:
 - Generate commit message: `marketing: [brief description of content created]`
-- Commit: `git commit -m "marketing: [description]"`
+- Commit using heredoc for safe quoting: `git commit -m "$(cat <<'EOF'\nmarketing: [description]\nEOF\n)"`
 - Push: `git push` (if remote exists)
 - If push fails: "Committed locally. Push when ready: `git push`"
-- If in a worktree or feature branch: `gh pr create --fill --draft 2>/dev/null` (silently, don't block if it fails)
+- If `GIT_BRANCH` is NOT `main` and NOT `master`: `gh pr create --fill --draft 2>/dev/null || true` (silently, don't block if fails or PR already exists)
 
 If no changes: skip git steps silently.
 
 After git, save state:
 ```bash
+_STATE_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
 echo "stage: shipped" > "$_STATE_FILE"
 echo "timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$_STATE_FILE"
 ```
@@ -249,9 +265,11 @@ Then:
 >
 > Run `/forbotsake-retro` next week to see what worked."
 
-Clean up state file:
+Clean up state file and orchestrated flag:
 ```bash
-rm -f "$_STATE_FILE" 2>/dev/null
+_STATE_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
+_ORCH_FLAG="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+rm -f "$_STATE_FILE" "$_ORCH_FLAG" 2>/dev/null
 ```
 
 ## Dry Run Mode

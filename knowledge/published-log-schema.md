@@ -40,8 +40,10 @@ Track what was published, where, and when. Used by /forbotsake-retro for measure
 
 To check if a content file has been published:
 ```bash
-grep -l "Source file: content/{filename}" published-log.md
+grep "Source file.*content/{filename}" published-log.md
 ```
+
+Note: The log format uses markdown bold (`**Source file:**`), so use a wildcard pattern that matches both `Source file:` and `**Source file:**`.
 
 If found, the file has been published before. Check the date header to see when.
 

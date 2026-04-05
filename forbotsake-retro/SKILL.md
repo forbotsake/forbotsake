@@ -1,0 +1,283 @@
+---
+name: forbotsake-retro
+description: |
+  Stage 9: MEASURE. Reviews what you published, analyzes performance data,
+  and produces a retro report with evidence-based recommendations.
+  Tells you what to double down on, what to drop, and what to try next.
+  Use when: "what worked", "marketing retro", "measure results", "review performance",
+  "which content performed best", "should I keep doing this".
+  Proactively invoke one week after /forbotsake-publish was last run.
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - AskUserQuestion
+---
+
+# /forbotsake-retro
+
+Measure. Learn. Decide. The feedback loop that makes marketing compound.
+
+## Preamble
+
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+mkdir -p "$FORBOTSAKE_HOME"
+
+# Check for updates
+_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-marketing-start/SKILL.md" -type f 2>/dev/null | head -1)" 2>/dev/null)
+_FBS_ROOT=$(cd "${_SKILL_DIR}/.." 2>/dev/null && pwd || true)
+_UPD=""
+[ -n "$_FBS_ROOT" ] && [ -x "$_FBS_ROOT/bin/forbotsake-update-check" ] && _UPD=$("$_FBS_ROOT/bin/forbotsake-update-check" 2>/dev/null || true)
+[ -n "$_UPD" ] && echo "$_UPD" || true
+_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+echo "BRANCH: $_BRANCH"
+
+# Check for published log
+if [ -f published-log.md ]; then
+  echo "PUBLISHED_LOG: yes"
+  wc -l published-log.md
+else
+  echo "PUBLISHED_LOG: no"
+fi
+
+# Check for strategy.md
+if [ -f strategy.md ]; then
+  echo "STRATEGY: yes"
+else
+  echo "STRATEGY: no"
+fi
+
+# Check for existing retro reports
+if [ -d retros/ ]; then
+  echo "RETRO_DIR: yes"
+  ls -1 retros/ 2>/dev/null | tail -5
+else
+  echo "RETRO_DIR: no"
+fi
+```
+
+If the preamble output shows `UPGRADE_AVAILABLE <old> <new>`: tell the user
+"forbotsake v{new} is available (you're on v{old}). Run `/forbotsake-upgrade` to update."
+Then continue with the skill normally. Do not block on the upgrade.
+
+If the output shows `JUST_UPGRADED <old> <new>`: tell the user
+"Running forbotsake v{new} (just updated!)." Then continue.
+
+If `PUBLISHED_LOG` is `no`: "No published-log.md found. I need to know what you published to analyze results. Either run `/forbotsake-publish` to ship content (it logs automatically), or tell me what you published and I'll work from that."
+Use AskUserQuestion to let the user provide publishing history manually.
+
+If `STRATEGY` is `no`: "No strategy.md found. I can still run a retro, but I won't be able to compare results against your goals. Consider running `/forbotsake-marketing-start` after this retro to set a baseline strategy."
+
+## Phase 1: Read the Record
+
+Read `published-log.md` completely. For each entry, note:
+- Date published
+- Platform/channel
+- Content title or description
+- Source file (read it if still in content/)
+- Any links or notes
+
+Read `strategy.md` to understand:
+- The ICP (who are we trying to reach?)
+- Channel strategy (which channels were prioritized?)
+- The 2-week experiment plan (what were the success criteria?)
+- Decision criteria (what number means "keep going" vs "pivot"?)
+
+If previous retro reports exist in `retros/`, read the most recent one to understand trends.
+
+Present a summary:
+
+> "Here's what I found in your published-log.md:
+>
+> {list of published content with dates and platforms}
+>
+> Your strategy.md says you're targeting {ICP} on {channels} with a success metric of {metric}.
+>
+> Now I need the numbers. Let's go through each piece."
+
+## Phase 2: Gather Results
+
+Use AskUserQuestion for each published piece. Ask ONE piece at a time to keep it manageable.
+
+> "For {content title} published on {date} to {platform}:
+>
+> What results did you see? Share whatever numbers you have:
+>
+> **Reach/Impressions:**
+> - Views/impressions?
+> - Follower count change?
+>
+> **Engagement:**
+> - Likes/reactions?
+> - Comments/replies?
+> - Shares/retweets/reposts?
+> - Saves/bookmarks?
+>
+> **Conversion:**
+> - Link clicks?
+> - Signups/trials?
+> - Revenue?
+>
+> **Qualitative:**
+> - Any notable replies or DMs?
+> - Did anyone share it with their audience?
+> - Any surprises?
+>
+> Share what you have. Zeros and 'I don't know' are valid answers."
+
+If the user doesn't have exact numbers, accept estimates. Note which metrics are estimates vs. actual in the analysis.
+
+If the user has results for multiple pieces, accept them in batch. Don't force one-at-a-time if the user wants to dump everything at once.
+
+## Phase 3: Analyze
+
+After collecting all results, analyze across three dimensions:
+
+### Content Performance
+
+Rank all published pieces by engagement rate (engagement / reach). Identify:
+- **Best performer:** Which piece got the most engagement relative to reach?
+- **Worst performer:** Which piece underperformed?
+- **Pattern:** What do the top performers have in common? (topic, format, tone, time of day)
+
+### Channel Performance
+
+Compare channels if multiple were used:
+- **Reach per effort:** Which channel delivered the most reach per hour of founder time?
+- **Engagement quality:** Which channel produced meaningful interactions (replies, DMs, signups) vs vanity metrics (likes)?
+- **Conversion:** Which channel drove actual business outcomes?
+
+### Experiment Evaluation
+
+Compare results against the success criteria from strategy.md:
+- Did the 2-week experiment meet the "keep going" threshold?
+- If not, did it show enough signal to continue with adjustments?
+- Or is it time to pivot to channel #2?
+
+## Phase 4: Write the Retro Report
+
+Create the retros/ directory if it doesn't exist:
+```bash
+mkdir -p retros/
+```
+
+Write the report to `retros/{YYYY-MM-DD}-retro.md`:
+
+```markdown
+---
+schema_version: 1
+generated_by: forbotsake
+generated_at: {ISO timestamp}
+period: {start date} to {end date}
+---
+# Marketing Retro: {date range}
+
+Generated by /forbotsake-retro on {date}
+
+## Summary
+
+{2-3 sentence overview: what was published, what worked, what the data says}
+
+## What Worked (with evidence)
+
+{For each thing that worked:}
+- **{Finding}:** {evidence — specific numbers, quotes, or observations}
+  - Why it worked: {analysis}
+  - Implication: {what to do about it}
+
+## What Didn't Work (with evidence)
+
+{For each thing that underperformed:}
+- **{Finding}:** {evidence — specific numbers or lack thereof}
+  - Why it likely failed: {analysis — be honest, not diplomatic}
+  - Implication: {what to change or stop}
+
+## Content Ranking
+
+| Content | Platform | Reach | Engagement | Eng. Rate | Conversions | Verdict |
+|---------|----------|-------|------------|-----------|-------------|---------|
+{ranked by engagement rate, best to worst}
+
+## Channel Comparison
+
+| Channel | Pieces Published | Avg. Reach | Avg. Engagement | Conversions | ROI/Hour | Verdict |
+|---------|-----------------|------------|-----------------|-------------|----------|---------|
+{ranked by ROI per hour of effort}
+
+## Experiment Verdict
+
+- **Goal:** {from strategy.md}
+- **Result:** {actual numbers}
+- **Decision:** {KEEP GOING / ADJUST / PIVOT}
+- **Reasoning:** {why this decision}
+
+## Recommendations
+
+### Double Down
+{What to do more of, with specific actions}
+
+### Adjust
+{What to change — messaging, timing, format, frequency}
+
+### Drop
+{What to stop doing — channels, content types, or tactics that aren't working}
+
+## Updated 2-Week Experiment Plan
+
+Based on these learnings:
+
+- **Channel:** {primary channel for next 2 weeks}
+- **Content plan:** {what to create and publish}
+- **Cadence:** {how often}
+- **Success metric:** {what to measure}
+- **Decision criteria:** {threshold for keep/pivot}
+
+## Open Questions
+
+{Things we still don't know. Hypotheses to test. Data we need.}
+```
+
+## Phase 5: Suggest Strategy Updates
+
+Based on the retro findings, identify specific changes to strategy.md:
+
+> "Based on this retro, here are suggested updates to your strategy.md:
+>
+> {list specific changes — channel scores, messaging adjustments, ICP refinements}
+>
+> Want me to apply these updates?"
+
+If the user says yes, use Edit to update strategy.md. Preserve the existing structure. Add a revision note at the top:
+
+```markdown
+<!-- Revised {date} based on /forbotsake-retro findings -->
+```
+
+Update the specific sections that need changing (channel scores, messaging pillars, experiment plan). Do NOT rewrite the whole file.
+
+## Phase 6: Next Steps
+
+Tell the user:
+
+> "Retro report saved to retros/{filename}.
+>
+> Based on the results:
+>
+> {If KEEP GOING:}
+> Your current approach is working. Run `/forbotsake-content-plan` to plan next week's content,
+> then `/forbotsake-create` to write it.
+>
+> {If ADJUST:}
+> The channel is right but the approach needs tweaking. Run `/forbotsake-content-plan`
+> with the adjusted strategy, then `/forbotsake-create` for new content.
+>
+> {If PIVOT:}
+> Time to try a different channel or major messaging shift.
+> Run `/forbotsake-marketing-start` again if the strategy needs a major revision,
+> or `/forbotsake-content-plan` for next week's content with the updated approach.
+>
+> Run `/forbotsake-retro` again next week to keep the loop going."

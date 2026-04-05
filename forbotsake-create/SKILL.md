@@ -70,6 +70,9 @@ fi
 # Today's date for file naming
 echo "TODAY: $(date +%Y-%m-%d)"
 
+# Orchestrated mode (invoked by forbotsake-go)
+echo "ORCHESTRATED: ${FORBOTSAKE_ORCHESTRATED:-0}"
+
 # Check for session resume file
 _SESSION_FILE="$FORBOTSAKE_HOME/session-create-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").json"
 if [ -f "$_SESSION_FILE" ]; then
@@ -101,8 +104,9 @@ If `CALENDAR_EXISTS` is `no`, note it but proceed:
 > But if you want a structured plan first, run `/forbotsake-content-plan`.
 > Otherwise, let's pick what to write."
 
-If `RESUME_AVAILABLE` is `yes`: "Found a previous session in progress. Resume where you left off?"
+If `RESUME_AVAILABLE` is `yes` AND `ORCHESTRATED` is `0`: "Found a previous session in progress. Resume where you left off?"
 Use AskUserQuestion with options: A) Resume, B) Start fresh.
+If `ORCHESTRATED` is `1` and `RESUME_AVAILABLE` is `yes`: ignore the resume file and start fresh.
 
 ## Phase 1: Absorb the Strategy
 
@@ -120,6 +124,15 @@ If `content-calendar.md` exists, read it and extract:
 - Format templates for the relevant content types
 
 ## Phase 2: Choose What to Create
+
+**Orchestrated mode (`ORCHESTRATED` is `1`):** Auto-select the content piece:
+- If content calendar exists with unfilled slots: pick the next unfilled slot (earliest date, highest-priority channel)
+- If no calendar: default to X/Twitter thread (highest reach for technical founders)
+- Auto-select topic from the first messaging pillar that hasn't been covered in existing content/ files
+- Skip all AskUserQuestion prompts in this phase — proceed directly to Phase 3 with the auto-selected channel and topic
+- Briefly note: "Creating: {channel} about {topic} (auto-selected from your calendar/strategy)"
+
+**Interactive mode (`ORCHESTRATED` is `0`):** Follow the normal flow below.
 
 If a content calendar exists and has upcoming slots, present them:
 
@@ -272,7 +285,9 @@ If any check fails, tell the user what's weak before confirming the file write.
 
 ## Phase 6: Next Steps
 
-Tell the user:
+**Orchestrated mode (`ORCHESTRATED` is `1`):** Skip this phase entirely. Do NOT suggest next skills or show the checklist. The orchestrator (forbotsake-go) handles what comes next. Simply confirm: "Content written to `content/{filename}`." Then stop.
+
+**Interactive mode (`ORCHESTRATED` is `0`):** Tell the user:
 
 > "Content is ready at `content/{filename}`.
 >

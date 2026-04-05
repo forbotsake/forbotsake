@@ -36,6 +36,9 @@ _UPD=""
 _BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 echo "BRANCH: $_BRANCH"
 
+# Orchestrated mode (invoked by forbotsake-go)
+echo "ORCHESTRATED: ${FORBOTSAKE_ORCHESTRATED:-0}"
+
 # Check for strategy.md
 if [ -f strategy.md ]; then
   echo "STRATEGY: yes"
@@ -75,6 +78,16 @@ If `CONTENT_DIR` is `no`: "No content/ directory found. Run `/forbotsake-create`
 Use AskUserQuestion to let the user provide content manually if they prefer.
 
 ## Phase 1: Select Content and Platform
+
+**Orchestrated mode (`ORCHESTRATED` is `1`):**
+- Auto-select content files: format ALL content files with `status: reviewed` or `status: revised` in frontmatter
+- Auto-select platform from each file's `channel:` frontmatter field
+- If a file has no channel specified, use the highest-scored channel from strategy.md
+- Skip the content/platform selection AskUserQuestion
+- In Phase 4: skip "Want me to format this for another platform too?" — just format and log
+- Skip Phase 5 (Next Steps) — the orchestrator handles what's next
+
+**Interactive mode (`ORCHESTRATED` is `0`):**
 
 Read `strategy.md` to understand the channel strategy and ICP.
 
@@ -291,7 +304,9 @@ Track what was published, where, and when. Used by /forbotsake-retro for measure
 
 ## Phase 5: Next Steps
 
-Tell the user:
+**Orchestrated mode (`ORCHESTRATED` is `1`):** Skip this phase entirely. Confirm: "Formatted and logged {N} pieces to published-log.md." Then stop.
+
+**Interactive mode (`ORCHESTRATED` is `0`):** Tell the user:
 
 > "Logged to published-log.md. Track results and run `/forbotsake-retro` next week
 > to measure what worked and plan your next move.

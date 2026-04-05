@@ -46,6 +46,9 @@ else
   echo "EXISTING_STRATEGY: no"
 fi
 
+# Orchestrated mode (invoked by forbotsake-go)
+echo "ORCHESTRATED: ${FORBOTSAKE_ORCHESTRATED:-0}"
+
 # Check for session resume file
 _SESSION_FILE="$FORBOTSAKE_HOME/session-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").json"
 if [ -f "$_SESSION_FILE" ]; then
@@ -62,6 +65,13 @@ Then continue with the skill normally. Do not block on the upgrade.
 
 If the output shows `JUST_UPGRADED <old> <new>`: tell the user
 "Running forbotsake v{new} (just updated!)." Then continue.
+
+**Orchestrated mode (`ORCHESTRATED` is `1`):**
+- If `EXISTING_STRATEGY` is `yes`: Skip this skill entirely. Say: "Using existing strategy.md." Then stop — do NOT proceed to Phase 1 or any questions. The orchestrator handles what's next.
+- If `EXISTING_STRATEGY` is `no`: Proceed normally through Phases 1-4 (the 5 questions require genuine human input). But skip Phase 5 (Next Steps) — the orchestrator handles what's next.
+- Ignore resume files in orchestrated mode.
+
+**Interactive mode (`ORCHESTRATED` is `0`):**
 
 If `EXISTING_STRATEGY` is `yes`, check frontmatter for `generated_by: forbotsake`.
 - If forbotsake-generated: "Found existing strategy.md. Want to update it or start fresh?"
@@ -245,7 +255,9 @@ If any check fails, tell the user what's weak and offer to revise.
 
 ## Phase 5: Next Steps
 
-Tell the user:
+**Orchestrated mode (`ORCHESTRATED` is `1`):** Skip this phase entirely. Confirm: "Strategy written to strategy.md." Then stop.
+
+**Interactive mode (`ORCHESTRATED` is `0`):** Tell the user:
 
 > "Your strategy.md is ready. Here's the pipeline:
 >

@@ -191,6 +191,35 @@ Claude: Week 1 results:
 
 You said "I should probably tweet about it." Nine skills later, you have positioning that competitors can't copy, content your audience actually wants, and data showing what works. That's not a tweet scheduler. That's a marketing team.
 
+## Autopilot Mode
+
+Make your content post itself. No active session needed.
+
+```bash
+# In Claude Code:
+/forbotsake-cron install
+```
+
+A cron job runs every 30 minutes. It reads your `content-calendar.md`, checks if any reviewed content is due, and posts it via Chrome automatically. Your laptop must be awake with Chrome running.
+
+**Prerequisites:**
+- Reviewed content (run the pipeline first)
+- `content-calendar.md` with `scheduled_datetime` column (ISO 8601, e.g., `2026-04-07T10:00:00-07:00`)
+- Chrome open with Claude for Chrome extension
+
+**Commands:**
+```
+/forbotsake-cron install    # enable autopilot
+/forbotsake-cron status     # see what's scheduled, what posted
+/forbotsake-cron pause      # temporarily stop
+/forbotsake-cron resume     # start again
+/forbotsake-cron doctor     # diagnose issues
+/forbotsake-cron run-now    # force one post immediately
+/forbotsake-cron uninstall  # disable autopilot
+```
+
+**How it works:** `bin/forbotsake-cron` checks the calendar every 30 min (no Claude tokens spent when nothing is due). When a post is due, it launches `claude -p --chrome` which connects to your Chrome browser and posts via the same UI you'd use manually. Reviewed content only. Draft content is never posted.
+
 ## How it works
 
 Each skill is a SKILL.md file that Claude Code reads and follows. Skills read your codebase (README, git log) to understand your product before asking questions. Outputs are markdown files in your project root.

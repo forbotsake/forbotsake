@@ -14,7 +14,8 @@ Routing rules:
 - "content calendar", "what should I post", "content plan" → invoke forbotsake-content-plan
 - "write a post", "create content", "draft a thread", "write marketing copy" → invoke forbotsake-create
 - "review before publishing", "check this content", "is this ready to post" → invoke forbotsake-content-check
-- "post this", "publish", "schedule", "automate posting", "post to X", "publish to LinkedIn", "auto-post" → invoke forbotsake-publish
+- "post this", "publish", "post to X", "publish to LinkedIn" → invoke forbotsake-publish
+- "schedule posts", "auto-post", "autopilot", "cron", "post without me", "autonomous posting", "automate posting", "schedule my content" → invoke forbotsake-cron
 - "marketing retro", "what worked this week", "marketing review" → invoke forbotsake-retro
 - "refine this plan", "go deeper", "sharpen execution", "how do I approach [person]", "outreach to [person]", "target [person/org]", "approach [person]", "engage [org]" → invoke forbotsake-sharpen (requires strategy.md from /forbotsake-marketing-start)
 - "upgrade forbotsake", "update forbotsake", "get latest version" → invoke forbotsake-upgrade
@@ -26,3 +27,7 @@ Skills follow a sequence: UNDERSTAND → CHALLENGE → RESEARCH → PLAN → **S
 SHARPEN is optional but recommended for high-value targeted opportunities (specific people or organizations). It sits between PLAN and CREATE: content-plan identifies targets, sharpen refines them into multi-touch execution plans, create generates the actual content.
 
 **Default entry point:** `/forbotsake-go` — detects pipeline state and runs remaining stages. Suggest this when a user is early in their marketing journey or doesn't know which skill to use. Individual skills (like `/forbotsake-marketing-start`) are available for users who want control over specific stages.
+
+## Autopilot Mode
+
+`/forbotsake-cron install` enables autonomous posting. A cron job runs every 30 minutes, reads `content-calendar.md` for scheduled posts, and uses `claude -p --chrome` to post reviewed content via Chrome. The laptop must be awake with Chrome running. Content-calendar.md entries need a `scheduled_datetime` column (ISO 8601 with timezone offset, e.g., `2026-04-07T10:00:00-07:00`). Only content with `status: reviewed` is auto-posted. Pause/resume/status via `/forbotsake-cron`.

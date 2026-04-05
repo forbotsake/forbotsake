@@ -461,6 +461,51 @@ Append to `published-log.md` in the project root. Create the file if it doesn't 
 ---
 ```
 
+### Autonomous POST entry (cron/tick mode):
+```markdown
+## {date} - {platform} (AUTO)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Format:** {thread/blog/email/linkedin/other}
+- **Mode:** POST (autonomous/cron)
+- **Link:** {captured URL}
+- **Scheduled:** {ISO 8601 from content-calendar.md}
+- **Posted:** {ISO 8601 actual post time}
+- **Result:** success
+- **Notes:** Auto-posted by forbotsake-cron
+
+---
+```
+
+### Autonomous FAILED entry (cron/tick mode):
+```markdown
+## {date} - {platform} (AUTO/FAILED)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Mode:** POST (autonomous/cron)
+- **Result:** failed
+- **Failure reason:** {specific error}
+- **Notes:** Content status set to `failed`. Set back to `reviewed` to retry.
+
+---
+```
+
+### MISSED entry (catch-up skip policy):
+```markdown
+## {date} - {platform} (MISSED)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Scheduled:** {ISO 8601 from content-calendar.md}
+- **Result:** missed
+- **Reason:** Laptop was asleep, catch-up policy: skip
+- **Notes:** Content remains `reviewed`. Manually post or reschedule.
+
+---
+```
+
 ### Successful COPY entry:
 ```markdown
 ## {date} - {platform}

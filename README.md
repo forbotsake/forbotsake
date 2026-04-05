@@ -1,5 +1,9 @@
 # forbotsake
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-skills-blueviolet)](https://docs.anthropic.com/en/docs/claude-code)
+[![Twitter](https://img.shields.io/twitter/follow/hanselh_?style=social)](https://x.com/hanselh_)
+
 Marketing skills for Claude Code. From zero marketing knowledge to published content.
 
 You can build the product. This helps you sell it.
@@ -76,6 +80,12 @@ cd ~/.claude/skills/forbotsake && git pull
 ```
 
 Every forbotsake skill checks for updates automatically. When a new version is available, you'll see a notice before the skill runs. Your strategy.md and other output files live in your project, not in the plugin directory. Upgrades are safe.
+
+## Contributing
+
+Found a bug? Have a skill idea? [Open an issue](https://github.com/forbotsake/forbotsake/issues).
+
+Pull requests welcome. forbotsake skills are pure markdown — if you can write a prompt, you can contribute.
 
 ## License
 

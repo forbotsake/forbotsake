@@ -1,11 +1,14 @@
 ---
 name: forbotsake-publish
 description: |
-  Stage 8: SHIP. Formats your content for a specific platform and gives you
-  copy-paste-ready text. Handles X/Twitter threads, blog posts, and email campaigns.
-  Logs everything published for retrospective analysis.
+  Stage 8: SHIP. Two modes: POST (auto-post via Claude for Chrome) or COPY
+  (format for copy-paste). Handles X/Twitter threads, LinkedIn posts, blog posts,
+  and more. Logs everything for retrospective analysis.
+  For auto-posting, the user needs the Claude for Chrome extension installed.
+  Without it, the skill falls back to COPY mode automatically.
   Use when: "publish this", "format for twitter", "post to X", "ship this content",
-  "format for blog", "send this email", "ready to publish".
+  "format for blog", "send this email", "ready to publish", "auto-post",
+  "post this to X", "publish to LinkedIn".
   Proactively invoke when the user has content in content/ and says they want to ship it.
 allowed-tools:
   - Bash
@@ -15,11 +18,18 @@ allowed-tools:
   - Grep
   - Glob
   - AskUserQuestion
+  - mcp__claude-in-chrome__tabs_context_mcp
+  - mcp__claude-in-chrome__tabs_create_mcp
+  - mcp__claude-in-chrome__navigate
+  - mcp__claude-in-chrome__read_page
+  - mcp__claude-in-chrome__get_page_text
+  - mcp__claude-in-chrome__find
+  - mcp__claude-in-chrome__computer
 ---
 
 # /forbotsake-publish
 
-From draft to platform-ready. Format, publish, log.
+From draft to published. Format, post, log.
 
 ## Preamble
 
@@ -77,30 +87,61 @@ Stop here unless user insists.
 If `CONTENT_DIR` is `no`: "No content/ directory found. Run `/forbotsake-create` to write your first piece, or point me to the content you want to publish."
 Use AskUserQuestion to let the user provide content manually if they prefer.
 
+## Chrome Detection
+
+After the preamble checks, detect whether Claude for Chrome browser tools are available. Try calling `mcp__claude-in-chrome__tabs_context_mcp` to check if the Chrome extension is connected. If it responds successfully, set CHROME_AVAILABLE to yes. If it errors or is not available, set CHROME_AVAILABLE to no.
+
+If CHROME_AVAILABLE is yes: the user can choose POST mode (auto-post via Chrome) or COPY mode.
+
+If CHROME_AVAILABLE is no: silently default to COPY mode. Mention once: "Auto-posting available with the Claude for Chrome extension. Using copy-paste mode."
+
 ## Phase 1: Select Content and Platform
 
 Read `strategy.md` to understand the channel strategy and ICP.
 
-Read all files in `content/` to see what's available.
+Read all files in `content/` to see what's available. Check each file's frontmatter for `status` field. Files with `status: published` in the log should be noted as already published.
 
 Use AskUserQuestion:
 
 > "Here's what I found in your content/ directory:
 >
-> {list each file with a one-line summary}
+> {list each file with a one-line summary and status}
 >
 > Which piece do you want to publish? And which platform?
 >
-> Platforms I can format for:
-> - **X/Twitter** (thread format, character limits enforced)
-> - **Blog** (SEO-optimized, headline options, meta tags)
-> - **Email** (subject lines, preview text, CTA)
-> - **LinkedIn** (post format, hashtag strategy)
-> - **Other** (tell me the platform and constraints)
+> **Auto-post** (I post for you via Chrome):
+> - **X/Twitter** (threads + single tweets)
+> - **LinkedIn** (posts)
+>
+> **Copy-paste + open browser** (I format it, open the compose page, you paste):
+> - **Blog** (Ghost, WordPress, Dev.to, Medium, Substack)
+> - **Reddit**
+> - **Hacker News**
+> - **Product Hunt**
+>
+> **Copy-paste only:**
+> - **Email** (formatted for your ESP)
+>
+> **CLI:**
+> - **GitHub** (PRs via `gh` CLI)
 >
 > Pick a content piece and a platform."
 
-If the user says "all platforms" or multiple platforms, format for each one sequentially. Start with the highest-scored channel from strategy.md.
+If CHROME_AVAILABLE is no, present all platforms as "Copy-paste" mode only. Do not show the Auto-post tier.
+
+If the user says "all" or "publish everything", loop through each unpublished content file and process them sequentially. Between posts to the same platform, wait 30-60 seconds. Maximum 5 posts to the same platform per session to avoid triggering anti-automation measures.
+
+### Mode Selection
+
+If CHROME_AVAILABLE is yes AND the selected platform is X/Twitter or LinkedIn, use AskUserQuestion:
+
+> "How do you want to publish to {platform}?
+> A) **POST** — I'll post it for you right now via Chrome
+> B) **COPY** — just give me the formatted text"
+
+For blog platforms, Reddit, HN, and Product Hunt: if Chrome is available, offer to open the platform's compose page in a new Chrome tab after formatting. This is a "COPY + deep link" flow — you format the content, open the compose URL, and the user pastes it in.
+
+For Email and GitHub: always COPY mode (email ESPs vary too much for automation; GitHub uses `gh` CLI).
 
 ## Phase 2: Format for Platform
 
@@ -248,7 +289,11 @@ Before delivering the formatted content, verify:
 
 If any check fails, fix it before presenting to the user.
 
-## Phase 4: Deliver and Log
+## Phase 4: Deliver or Post
+
+This phase splits based on the mode selected in Phase 1.
+
+### COPY Mode (all platforms)
 
 Present the formatted content to the user with:
 
@@ -263,19 +308,183 @@ Present the formatted content to the user with:
 >
 > Want me to format this for another platform too?"
 
-### Log the Publication
+For blog platforms, Reddit, HN, and Product Hunt: if Chrome is available, also open the platform's compose page in a new tab using `mcp__claude-in-chrome__tabs_create_mcp` so the user can paste directly. Tell the user: "I've opened {platform} in a new tab. Paste your content there."
+
+Skip to Phase 5 (Log).
+
+### POST Mode (X/Twitter and LinkedIn only)
+
+POST mode automates the entire posting flow via Claude for Chrome. It works best for X and LinkedIn, which have stable compose UIs. Other platforms may have lower reliability. COPY mode always works as a fallback.
+
+#### Step 4a: Account Identity Preflight
+
+Before posting anything, verify the logged-in account:
+
+1. Use `mcp__claude-in-chrome__tabs_create_mcp` to open the platform's home page (x.com/home for X, linkedin.com/feed for LinkedIn).
+2. Use `mcp__claude-in-chrome__read_page` or `mcp__claude-in-chrome__get_page_text` to find the current username/handle on the page.
+3. Use AskUserQuestion: "I see you're logged in as {handle} on {platform}. Is that the right account to post from?"
+4. If user confirms, proceed. If not, tell them to switch accounts in Chrome and try again, or use COPY mode.
+
+If the page shows a login wall instead of the home feed, the user is not logged in. Fall back to COPY mode: "Looks like you're not logged into {platform} in Chrome. Here's the formatted text to copy-paste instead."
+
+#### Step 4b: Navigate to Compose
+
+Read the publishing automation knowledge framework for platform-specific instructions:
+```bash
+_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-publish/SKILL.md" -type f 2>/dev/null | head -1)")
+echo "SKILL_DIR: $_SKILL_DIR"
+```
+
+Read `$_SKILL_DIR/../knowledge/frameworks/publishing-automation.md` for the platform-specific posting flow. If this file does not exist, use the inline instructions below.
+
+**For X/Twitter:**
+1. Use `mcp__claude-in-chrome__navigate` to go to `https://x.com/compose/post`
+2. Wait for the compose area to load
+3. Use `mcp__claude-in-chrome__read_page` to verify the compose UI is present
+
+**For LinkedIn:**
+1. Use `mcp__claude-in-chrome__navigate` to go to `https://linkedin.com/feed`
+2. Use `mcp__claude-in-chrome__find` to locate the "Start a post" button
+3. Use `mcp__claude-in-chrome__computer` to click it
+4. Wait for the compose modal to appear
+
+If navigation fails or the compose UI is not found:
+- **What happened:** "Could not find the compose area on {platform}."
+- **Why:** "The page may have changed, or you may not be logged in."
+- **Fix:** "Try refreshing the page in Chrome, or use COPY mode instead."
+Fall back to COPY mode and deliver the formatted text.
+
+#### Step 4c: Fill Content
+
+**X/Twitter single tweet:**
+1. Use `mcp__claude-in-chrome__computer` to click the compose textarea
+2. Use `mcp__claude-in-chrome__computer` to type the tweet text
+3. Take a screenshot: `screencapture -x /tmp/forbotsake-pre-post-$(date +%s).png` and then use the Read tool to show it to the user. If screencapture fails (non-macOS), skip the screenshot and continue.
+
+**X/Twitter thread:**
+1. Use `mcp__claude-in-chrome__computer` to click the compose textarea
+2. Type tweet 1 text
+3. Look for the thread "+" button (usually near the bottom of the compose area) and click it
+4. A new tweet textarea appears. Type tweet 2 text.
+5. Repeat for all tweets in the thread.
+6. Take a screenshot: `screencapture -x /tmp/forbotsake-pre-post-$(date +%s).png` and use the Read tool to show it.
+
+**Compose-time failure recovery:** If thread composing fails (e.g., the "+" button is not found after tweet N):
+1. Immediately stop.
+2. The thread has NOT been posted yet (it's still in the compose UI).
+3. Show the user: "Could not add tweet {N+1} to the thread. Here's the full thread as copy-paste instead."
+4. Fall back to COPY mode. Do not log as PARTIAL (nothing was published).
+
+**Post-time failure recovery:** If the "Post all" button is clicked but the thread only partially appears (platform error):
+1. Use `mcp__claude-in-chrome__read_page` to check what was actually published.
+2. If partial content is live, capture the URL.
+3. Log to published-log.md as PARTIAL (see Phase 5).
+4. Show the user: "Thread partially posted ({N}/{total} tweets). Here are the remaining tweets to post manually: {remaining tweets formatted}."
+
+**LinkedIn post:**
+1. Use `mcp__claude-in-chrome__computer` to click the compose area in the modal
+2. Type the post content
+3. Take a screenshot using `screencapture` as pre-post evidence
+
+#### Step 4d: Confirm and Post
+
+Before clicking Post, show the user a screenshot of the filled compose area and ask for confirmation:
+
+> "Here's what's ready to post on {platform}. {screenshot}
+>
+> Ready to publish?"
+
+Use AskUserQuestion with options: A) Post it, B) Edit first (switch to COPY mode), C) Cancel.
+
+If A (Post):
+1. Use `mcp__claude-in-chrome__computer` to click the Post/Publish button.
+2. Wait 3 seconds for the platform to process.
+
+If the user specifies a time (e.g., "schedule for Monday 10am PT"):
+1. Instead of clicking Post, look for the schedule button (calendar/clock icon near the Post button).
+2. Click it to open the scheduling UI.
+3. Set the date and time using the platform's native scheduling interface.
+4. Confirm the schedule.
+5. Log as POST in Phase 5 with a "Scheduled for: {date/time}" note.
+
+#### Step 4e: Verify and Capture
+
+After posting:
+1. Use `mcp__claude-in-chrome__read_page` or `mcp__claude-in-chrome__get_page_text` to read the current page.
+2. Check that the URL has changed to include a post ID (e.g., `x.com/{handle}/status/{id}`).
+3. Verify that key phrases from the source content appear on the published page. Note: platforms mangle URLs (t.co links on X) and may convert special characters. Compare the main text content, not URLs or formatting.
+4. Take a screenshot: `screencapture -x /tmp/forbotsake-published-$(date +%s).png` and use the Read tool to show it.
+5. Extract the post URL.
+
+If URL capture fails (some platforms don't redirect immediately):
+Tell the user: "Posted successfully. The URL didn't load yet. Paste it into published-log.md when you see it."
+
+If content verification fails (published content doesn't match source):
+Warn: "Published content may not match source. Please verify the post on {platform}."
+
+If any step in Phase 4 fails, fall back to COPY mode and log the failure. Every error message must include:
+1. **What happened** (specific failure)
+2. **Why** (likely cause)
+3. **Fix** (actionable next step)
+
+## Phase 5: Log
 
 Append to `published-log.md` in the project root. Create the file if it doesn't exist.
 
-Format:
+### Successful POST entry:
 ```markdown
 ## {date} - {platform}
 
 - **Content:** {title or first line}
 - **Source file:** {path to content file}
 - **Format:** {thread/blog/email/linkedin/other}
-- **Link:** {URL if user provides one, otherwise "pending"}
+- **Mode:** POST
+- **Link:** {captured URL}
 - **Notes:** {any relevant context}
+
+---
+```
+
+### Successful COPY entry:
+```markdown
+## {date} - {platform}
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Format:** {thread/blog/email/linkedin/other}
+- **Mode:** COPY
+- **Link:** pending
+- **Notes:** Copy-paste delivered. Update link after posting.
+
+---
+```
+
+### Partial publish entry (thread interrupted):
+```markdown
+## {date} - {platform} (PARTIAL)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Format:** thread
+- **Mode:** POST (partial)
+- **Link:** {URL of first tweet if captured}
+- **Posted:** {N}/{total} tweets
+- **Notes:** Thread posting interrupted after tweet {N}. Remaining tweets delivered as copy-paste.
+
+---
+```
+
+### Failed POST entry (fell back to COPY):
+```markdown
+## {date} - {platform} (FAILED -> COPY)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Format:** {format}
+- **Mode:** POST (failed)
+- **Failure reason:** {Chrome not detected | login wall | element not found | rate limited | content mismatch}
+- **Fallback:** COPY mode delivered
+- **Link:** pending
 
 ---
 ```
@@ -292,12 +501,28 @@ Track what was published, where, and when. Used by /forbotsake-retro for measure
 {first entry}
 ```
 
-## Phase 5: Next Steps
+After logging, update the source content file's frontmatter status based on the outcome:
+- **POST mode success**: set `status: published`
+- **POST mode partial**: set `status: partial`
+- **COPY mode**: do NOT change the status (content is formatted but not yet posted)
+- **FAILED → COPY fallback**: do NOT change the status (posting failed, content not live)
+
+## Phase 6: Next Steps
 
 Tell the user:
 
-> "Logged to published-log.md. Track results and run `/forbotsake-retro` next week
-> to measure what worked and plan your next move.
+> "Logged to published-log.md. {If POST mode: 'Posted to {platform} as {handle}.'}
 >
-> Want to format this for another platform? Or run `/forbotsake-create` to write
-> the next piece in your content plan?"
+> {If links are pending: 'Update the link in published-log.md after posting.'}
+>
+> Track results and run `/forbotsake-retro` next week to measure what worked.
+>
+> Want to publish to another platform? Or run `/forbotsake-create` for the next piece?"
+
+For batch publishing, show a summary:
+> "Published {N}/{total} pieces:
+> - {piece 1}: {platform} ({mode}) {URL or 'pending'}
+> - {piece 2}: {platform} ({mode}) {URL or 'pending'}
+> ...
+>
+> Run `/forbotsake-retro` next week to measure results."

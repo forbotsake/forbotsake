@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.1 (2026-04-05)
+
+### Added
+- `/forbotsake-sharpen` — new skill for targeted outreach. Takes a specific person or organization, does deep contextual research, maps your connections and warm paths, generates tailored outreach angles, and produces a multi-touch execution plan. The missing layer between "identify an opportunity" and "create content."
+- `knowledge/frameworks/execution-intelligence.md` — 5-step methodology for execution intelligence: classify target, deep research (with fast path for known targets), map your position, generate angles, build multi-touch plan. Quality gates catch shallow single-action plans.
+- `founder-profile.md` — durable founder identity file at `~/.forbotsake/`. Captures affiliations, key relationships, unfair advantages, and communication style. Written by Q6 in `/forbotsake-marketing-start`, read by `/forbotsake-sharpen` for warm path discovery.
+- `.gitignore` — covers `execution-plans/` and other sensitive output artifacts.
+
+### Changed
+- `/forbotsake-marketing-start` now asks 6 questions (was 5). New Q6 captures your position: communities, connections, and unfair advantages. Writes `founder-profile.md`.
+- `/forbotsake-content-plan` now flags high-value targets with "needs sharpen" notes when building the calendar. Suggests running `/forbotsake-sharpen` before creating content for specific people or organizations.
+- Pipeline updated: UNDERSTAND → CHALLENGE → RESEARCH → PLAN → **SHARPEN** → CREATE → REVIEW → SHIP → MEASURE. SHARPEN is optional but recommended for targeted opportunities.
+- CLAUDE.md routing rules updated with sharpen triggers and prerequisite callout.
+- README updated with new skill count, pipeline diagram, and quick start reflecting 6 questions.
+
 ## 0.3.0 (2026-04-05)
 
 ### Added

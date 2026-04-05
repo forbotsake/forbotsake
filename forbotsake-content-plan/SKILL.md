@@ -182,7 +182,15 @@ Build the calendar by:
 
 4. **Set cadence per channel** respecting capacity constraints. Always leave 20% buffer -- if someone says 5 hours, plan for 4 hours of content.
 
-5. **Create format templates** for each content type in the calendar. These are structural templates, not content:
+5. **Flag high-value targets for `/forbotsake-sharpen`:** While building the calendar, identify any content slots that involve a specific person or organization (e.g., "X thread mentioning @garrytan about gstack", "PR to gstack repo", "outreach to community leader"). For the top 1-2 highest-value targets, add a note in the calendar:
+
+   > "🎯 **High-value target — run `/forbotsake-sharpen` before creating this content.**
+   > Sharpen will research [target], map your connections, and produce a multi-touch
+   > execution plan so this content is part of a coordinated approach, not a one-off."
+
+   A target qualifies for flagging only if (a) the content slot is specifically about engaging that person/org, not just mentioning them, and (b) the desired outcome requires a response from them (not just awareness). Don't flag every proper noun.
+
+6. **Create format templates** for each content type in the calendar. These are structural templates, not content:
 
    Example thread template:
    ```

@@ -10,7 +10,7 @@ You can build the product. This helps you sell it.
 
 **Who this is for:** Devtool founders who shipped v1 but have <10 qualified leads/month. You use Claude Code daily. You know how to code. You don't know how to market. forbotsake fixes that.
 
-**What makes this different:** Every other marketing plugin gives you `/write-blog-post`. forbotsake asks you 5 hard questions first, then tells you what to write, where to post it, and why. Thinking first, then execution. The skills encode real agency methodology, not generic prompts.
+**What makes this different:** Every other marketing plugin gives you `/write-blog-post`. forbotsake asks you 6 hard questions first, then tells you what to write, where to post it, and why. Thinking first, then execution. The skills encode real agency methodology, not generic prompts.
 
 ## Install (30 seconds)
 
@@ -37,16 +37,17 @@ bash ~/.claude/skills/forbotsake/bin/sync-links.sh --check
 forbotsake skills follow a sequence. Start at the top, work down.
 
 ```
-UNDERSTAND → CHALLENGE → RESEARCH → PLAN → CREATE → REVIEW → SHIP → MEASURE
+UNDERSTAND → CHALLENGE → RESEARCH → PLAN → SHARPEN → CREATE → REVIEW → SHIP → MEASURE
 ```
 
 | # | Stage | Command | What it does |
 |---|-------|---------|-------------|
-| 1 | UNDERSTAND | `/forbotsake-marketing-start` | Ask 5 hard questions, produce strategy.md + your first move |
+| 1 | UNDERSTAND | `/forbotsake-marketing-start` | Ask 6 hard questions, produce strategy.md + founder-profile.md |
 | 2 | CHALLENGE | `/forbotsake-cmo-check` | Push back on your strategy. Score it. Force alternatives. |
 | 3 | RESEARCH | `/forbotsake-spy` | Browse 3-5 competitors, build a messaging matrix |
 | 4 | RESEARCH | `/forbotsake-icp` | Deep-dive your ideal customer: behavior, pain, communities |
 | 5 | PLAN | `/forbotsake-content-plan` | Content calendar: themes, formats, cadence per channel |
+| 5.5 | SHARPEN | `/forbotsake-sharpen` | Research a specific target, map connections, build multi-touch plan |
 | 6 | CREATE | `/forbotsake-create` | Write actual content: X threads, posts, emails |
 | 7 | REVIEW | `/forbotsake-content-check` | Pre-publish check: brand voice, messaging, channel fit |
 | 8 | SHIP | `/forbotsake-publish` | Auto-post via Chrome, schedule content, or copy-paste ready text |
@@ -57,8 +58,8 @@ UNDERSTAND → CHALLENGE → RESEARCH → PLAN → CREATE → REVIEW → SHIP �
 1. Install (see above)
 2. Open your project in Claude Code
 3. Type `/forbotsake` to see all available skills (or go straight to `/forbotsake-marketing-start`)
-4. Answer 5 questions about your product
-5. Get a strategy.md with your positioning, ICP, channel strategy, and first move
+4. Answer 6 questions about your product and your position
+5. Get a strategy.md + founder-profile.md with your positioning, ICP, channels, and connections
 
 Then work through the pipeline: challenge it, research competitors, plan content, create it, review it, ship it, measure it.
 

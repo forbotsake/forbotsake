@@ -1,0 +1,13 @@
+# forbotsake output artifacts (contain personal data, relationship maps)
+execution-plans/
+founder-profile.md
+strategy.md
+forbotsake-strategy.md
+content-calendar.md
+forbotsake-content-calendar.md
+icp-profile.md
+competitor-analysis.md
+content/
+
+# forbotsake session state
+.forbotsake/

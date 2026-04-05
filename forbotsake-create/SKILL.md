@@ -70,6 +70,28 @@ fi
 # Today's date for file naming
 echo "TODAY: $(date +%Y-%m-%d)"
 
+# Multi-modal: check for brand.md
+if [ -f brand.md ]; then
+  echo "BRAND_EXISTS: yes"
+  head -3 brand.md
+else
+  echo "BRAND_EXISTS: no"
+fi
+
+# Multi-modal: check for media-providers.md (or auto-detect)
+if [ -f media-providers.md ]; then
+  echo "PROVIDERS_EXISTS: yes"
+else
+  echo "PROVIDERS_EXISTS: no"
+  # Auto-detect available providers
+  echo "--- PROVIDER DETECTION ---"
+  command -v bun >/dev/null 2>&1 && echo "SATORI_AVAILABLE: yes (bun)" || { command -v node >/dev/null 2>&1 && echo "SATORI_AVAILABLE: yes (node)" || echo "SATORI_AVAILABLE: no"; }
+  echo "CHROME_MCP: check-at-runtime"
+  [ -n "${NANO_BANANA_API_KEY:-}" ] && echo "NANO_BANANA_API: yes" || echo "NANO_BANANA_API: no"
+  [ -n "${SEEDANCE_API_KEY:-}" ] && echo "SEEDANCE_API: yes" || echo "SEEDANCE_API: no"
+  echo "--- END DETECTION ---"
+fi
+
 # Orchestrated mode (invoked by forbotsake-go, propagated via file flag)
 _ORCH_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
 FORBOTSAKE_ORCHESTRATED=$(cat "$_ORCH_FILE" 2>/dev/null || echo 0)
@@ -113,6 +135,21 @@ If `RESUME_AVAILABLE` is `yes` AND `ORCHESTRATED` is `0`: "Found a previous sess
 Use AskUserQuestion with options: A) Resume, B) Start fresh.
 If `ORCHESTRATED` is `1` and `RESUME_AVAILABLE` is `yes`: ignore the resume file and start fresh.
 
+## Phase 0.5: Media Provider Setup
+
+If `PROVIDERS_EXISTS` is `no`, auto-generate `media-providers.md` based on detected capabilities:
+
+Read the provider framework:
+```bash
+_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-marketing-start/SKILL.md" -type f 2>/dev/null | head -1)")
+echo "SKILL_DIR: $_SKILL_DIR"
+```
+Read `$_SKILL_DIR/../knowledge/frameworks/media-providers.md` for the schema.
+
+Write `media-providers.md` to the project root with detected providers enabled/disabled based on preamble detection output. If no providers are available, write the config with all disabled and `fallback: prompt-only`. Tell the user: "Created media-providers.md. Visual prompts will be saved for manual generation. Install bun/node for text-cards, or Claude for Chrome extension for AI images."
+
+If `PROVIDERS_EXISTS` is `yes`, read it to know which providers are available.
+
 ## Phase 1: Absorb the Strategy
 
 Read `strategy.md` completely. Extract and internalize:
@@ -122,6 +159,12 @@ Read `strategy.md` completely. Extract and internalize:
 3. **Channel strategy** -- ranked channels with rationale
 4. **Messaging pillars** -- the 3 claims with proof points
 5. **Brand voice** -- if defined, note the tone (if not defined, default to: direct, specific, no jargon, conversational)
+
+If `brand.md` exists, read it and extract:
+- Color palette (primary, accent, background, text)
+- Visual style (mood, image_type, avoid list)
+- Prompt prefix for image generation
+- If brand.md is missing, visual generation still works but uses neutral defaults
 
 ### Reviewer Notes Check
 
@@ -142,6 +185,7 @@ If `content-calendar.md` exists, read it and extract:
 - Current week's theme and messaging pillar focus
 - Specific content slots that haven't been created yet
 - Format templates for the relevant content types
+- Suggested visual treatment per content piece (if present)
 
 ## Phase 2: Choose What to Create
 
@@ -243,6 +287,88 @@ Present the full draft to the user inline first, then ask:
 
 Use AskUserQuestion. Iterate until the user says "ship it."
 
+## Phase 3.5: Visual Treatment Decision
+
+After the text content is drafted and approved, decide what visual treatment this content needs.
+
+**Read the visual strategy framework:**
+```bash
+_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-marketing-start/SKILL.md" -type f 2>/dev/null | head -1)")
+```
+Read `$_SKILL_DIR/../knowledge/frameworks/visual-strategy.md` for the decision matrix.
+
+**Decision logic:**
+- `none`: hot takes, replies, technical deep-dives, short threads (<280 chars), quick tips, HN posts
+- `text-card`: stat highlights ("2.3x faster"), quote cards, key takeaways, listicle items, comparison tables. Use when the content IS the visual.
+- `ai-image`: launch announcements, storytelling posts, blog headers, Product Hunt assets. Use when the visual adds meaning beyond text (a metaphor, a scene, an emotion).
+- `video`: product demos, launch teasers, explainer shorts. Use for high-impact launch content or when showing the product in action.
+
+**Channel defaults:**
+- X/Twitter thread: `ai-image` for hero (tweet 1), `none` for other tweets
+- X/Twitter single: `text-card` if stat/quote, `ai-image` if storytelling, `none` if hot take
+- LinkedIn: `ai-image` or `text-card` (LinkedIn posts with images get 2x engagement)
+- Blog: `ai-image` for featured/OG image
+- Product Hunt: `ai-image` for gallery
+- Email: `none` or `text-card` (optional)
+- Reddit/HN: `none` (these platforms value text over visuals)
+
+Generate the `visual_prompt` by combining:
+1. A summary of what the content is about (1 sentence)
+2. The brand.md `prompt_prefix` (style, colors, mood)
+3. Channel-specific style cues (e.g., "wide format 1200x675" for X)
+
+Generate `visual_alt` accessibility text describing the image concept.
+
+**Interactive mode:** Tell the user the visual treatment decision and why. If they disagree, let them override.
+**Orchestrated mode:** Auto-decide and proceed.
+
+## Phase 3.6: Visual Generation
+
+If `visual_treatment` is `none`, skip this phase.
+
+If `visual_treatment` is `text-card`:
+1. Check if `local-satori` provider is available in media-providers.md
+2. If available: run `bun run $_SKILL_DIR/../bin/src/satori-card.ts --content {content_file} --brand brand.md --output content/{date}-{channel}-{slug}-visual-1.png --type {quote|stat|title|takeaway} --dimensions {channel-appropriate dimensions}`
+3. If not available: save the text-card spec in frontmatter for manual creation. Note: "Text-card generation requires bun or node. Install with: `curl -fsSL https://bun.sh/install | bash`"
+
+If `visual_treatment` is `ai-image`:
+1. Check media-providers.md for enabled ai-image provider
+2. **Gemini browser path:**
+   - Echo: "Generating image via Gemini... (this takes 30-60 seconds)"
+   - Navigate to `https://gemini.google.com` via Chrome automation
+   - Check if logged in (look for compose area). If login wall: warn, fall back to prompt-only
+   - Type the `visual_prompt` into compose area
+   - Wait for image generation (poll for image element, timeout 60s)
+   - Extract image as base64 via `javascript_tool`: find the generated image element, draw it to a canvas, call `canvas.toDataURL('image/png')`, decode and save to content/ directory
+   - Echo: "Image generated. Saved: content/{filename}-visual-1.png"
+   - Show the image to the user (Read tool displays images)
+3. **Nano Banana API path:**
+   - Call the Gemini API with the visual_prompt
+   - Save response image to content/ directory
+4. **Prompt-only fallback:** Save visual_prompt in frontmatter, skip generation
+
+**Image review flow (interactive mode only):**
+
+After generating the image, show it and ask via AskUserQuestion:
+
+> "Here's the generated image for your {channel} post."
+>
+> A) Use this image
+> B) Regenerate with a different prompt (I'll refine it)
+> C) Switch to text-card instead
+> D) Skip visual for this post
+
+Max 3 regeneration attempts. On 4th attempt, fall back to the best one or skip.
+
+**Orchestrated mode:** Auto-accept the first generated image. If generation fails, set `visual_status: failed` and continue.
+
+If `visual_treatment` is `video`:
+1. Check media-providers.md for enabled video provider
+2. **Veo browser path:** Navigate to Veo, submit video prompt, note that video generation takes 2-5 minutes. In orchestrated mode, continue pipeline and note video is pending.
+3. **Seedance API path:** Submit API request, poll for completion.
+4. **Prompt-only fallback:** Save video prompt for manual creation.
+5. Save video as `content/{date}-{channel}-{slug}-video-1.mp4`
+
 ## Phase 4: Write to File
 
 Create the content directory if it doesn't exist:
@@ -254,7 +380,7 @@ Write to `content/{date}-{channel}-{topic-slug}.md` with this schema:
 
 ```markdown
 ---
-schema_version: 1
+schema_version: 2
 generated_by: forbotsake
 generated_at: {ISO timestamp}
 channel: {x-thread|x-tweet|blog|linkedin|email|reddit|hackernews|producthunt}
@@ -262,6 +388,13 @@ status: draft
 messaging_pillar: {which pillar this content supports}
 topic: {topic description}
 estimated_publish_date: {from calendar if available, else blank}
+visual_treatment: {none|text-card|ai-image|video}
+visual_prompt: "{the prompt used or to be used for generation}"
+visual_placement: {hero|inline|thumbnail}
+visual_count: {number of visuals, default 1}
+visual_status: {generated|failed|pending|skipped}
+visual_alt: "{accessibility description of the visual}"
+visual_provider: "{provider name used, e.g., gemini-browser, local-satori}"
 ---
 # {Content Title}
 
@@ -282,6 +415,7 @@ Target: {ICP description from strategy.md}
 - **CTA:** {the single call-to-action in this piece}
 - **Thread to conversation:** {what topic to engage on if people reply}
 - **Metrics to watch:** {what to measure for this specific piece}
+- **Visual:** {visual_treatment} via {provider} — {path to visual file or "prompt-only"}
 ```
 
 Confirm the file was written:

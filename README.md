@@ -25,7 +25,7 @@ git clone --single-branch --depth 1 https://github.com/forbotsake/forbotsake.git
 bash ~/.claude/skills/forbotsake/bin/sync-links.sh
 ```
 
-No build step. No dependencies. Pure markdown.
+No build step. No dependencies for core skills. Optional: bun/node for text-card generation, Claude for Chrome for AI image generation.
 
 **Verify it worked:**
 ```bash
@@ -42,15 +42,15 @@ UNDERSTAND → CHALLENGE → RESEARCH → PLAN → SHARPEN → CREATE → RED TE
 
 | # | Stage | Command | What it does |
 |---|-------|---------|-------------|
-| 1 | UNDERSTAND | `/forbotsake-marketing-start` | Ask 6 hard questions, produce strategy.md + founder-profile.md |
+| 1 | UNDERSTAND | `/forbotsake-marketing-start` | Ask 6 hard questions, produce strategy.md + founder-profile.md + brand.md |
 | 2 | CHALLENGE | `/forbotsake-cmo-check` | Push back on your strategy. Score it. Force alternatives. |
 | 3 | RESEARCH | `/forbotsake-spy` | Browse 3-5 competitors, build a messaging matrix |
 | 4 | RESEARCH | `/forbotsake-icp` | Deep-dive your ideal customer: behavior, pain, communities |
 | 5 | PLAN | `/forbotsake-content-plan` | Content calendar: themes, formats, cadence per channel |
 | 5.5 | SHARPEN | `/forbotsake-sharpen` | Research a specific target, map connections, build multi-touch plan |
-| 6 | CREATE | `/forbotsake-create` | Write actual content: X threads, posts, emails |
-| 7 | REVIEW | `/forbotsake-content-check` | Pre-publish check: brand voice, messaging, channel fit |
-| 8 | SHIP | `/forbotsake-publish` | Auto-post via Chrome, schedule content, or copy-paste ready text |
+| 6 | CREATE | `/forbotsake-create` | Write content + generate visuals: text-cards, AI images, video |
+| 7 | REVIEW | `/forbotsake-content-check` | Pre-publish check: brand voice, messaging, channel fit, visual consistency |
+| 8 | SHIP | `/forbotsake-publish` | Auto-post with media via Chrome, or copy-paste ready text + image paths |
 | 9 | MEASURE | `/forbotsake-retro` | Weekly retro: what worked, what to change next |
 
 ## Quick start
@@ -226,9 +226,33 @@ Each skill is a SKILL.md file that Claude Code reads and follows. Skills read yo
 
 Key outputs:
 - `strategy.md` — your marketing strategy (positioning, ICP, channels, messaging)
+- `brand.md` — visual identity (colors, typography, mood, image style)
+- `media-providers.md` — available visual generation backends (auto-detected)
 - `competitor-analysis.md` — competitor messaging matrix
 - `icp-profile.md` — ideal customer profile
-- `content-calendar.md` — what to post, where, when
+- `content-calendar.md` — what to post, where, when (with visual treatment suggestions)
+- `content/*-visual-*.png` — generated images and text-cards alongside content
+
+## Multi-modal visual generation
+
+forbotsake generates images and video alongside text content. The AI decides which posts need visuals based on your strategy and channel norms.
+
+**How it works:**
+1. `/forbotsake-marketing-start` creates `brand.md` with your visual identity (colors, style, mood)
+2. `/forbotsake-create` decides the visual treatment per post (none / text-card / ai-image / video)
+3. Generates the visual using the best available provider (local text-cards, Gemini browser, API)
+4. `/forbotsake-publish` attaches visuals when posting to platforms
+
+**Providers (auto-detected):**
+| Provider | Type | Cost | Requires |
+|----------|------|------|----------|
+| local-satori | Text-cards | Free | bun or node |
+| gemini-browser | AI images | Free (with Google sub) | Claude for Chrome |
+| nano-banana-api | AI images | ~$0.04/image | API key |
+| veo-browser | Video | Free (with Google sub) | Claude for Chrome |
+| seedance-api | Video | Per-use | API key |
+
+No provider configured? No problem. forbotsake saves the visual prompt in your content file's frontmatter for manual generation later.
 
 ## Quality Gates (Adversarial Review)
 

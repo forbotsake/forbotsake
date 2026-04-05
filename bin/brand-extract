@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# brand-extract — Extract brand identity from URL or screenshot
+#
+# This is a convenience wrapper. The actual extraction uses Claude's vision
+# capabilities within the forbotsake-marketing-start skill.
+#
+# Usage:
+#   brand-extract https://yoursite.com        # Extract from URL
+#   brand-extract --screenshot path/to/img    # Extract from screenshot
+#   brand-extract --template                  # Output a blank template
+set -euo pipefail
+
+usage() {
+  echo "Usage: brand-extract <url|--screenshot path|--template>"
+  echo ""
+  echo "  brand-extract https://yoursite.com       Extract from URL (requires Claude Code)"
+  echo "  brand-extract --screenshot path/to/img   Extract from screenshot (requires Claude Code)"
+  echo "  brand-extract --template                 Output a blank brand.md template"
+  exit 1
+}
+
+[ $# -eq 0 ] && usage
+
+if [ "$1" = "--template" ]; then
+  cat <<'TEMPLATE'
+---
+schema_version: 1
+generated_by: forbotsake
+generated_at: "YYYY-MM-DDTHH:MM:SSZ"
+---
+name: "Your Product Name"
+colors:
+  primary: "#1a1a2e"
+  accent: "#e94560"
+  background: "#f5f5f5"
+  text: "#1a1a2e"
+typography:
+  mood: "modern sans-serif, clean, technical"
+  heading_style: "bold, uppercase for short titles"
+visual_style:
+  mood: ["minimal", "technical", "warm"]
+  image_type: "flat illustration"
+  avoid: ["stock photo feel", "clipart", "overly corporate"]
+logo:
+  path: ""
+  placement: "bottom-right"
+prompt_prefix: "Minimal flat illustration, warm palette with primary and accent colors"
+TEMPLATE
+  exit 0
+fi
+
+if [ "$1" = "--screenshot" ]; then
+  [ $# -lt 2 ] && { echo "Error: --screenshot requires a file path"; exit 1; }
+  SCREENSHOT="$2"
+  [ ! -f "$SCREENSHOT" ] && { echo "Error: File not found: $SCREENSHOT"; exit 1; }
+  echo "To extract brand identity from this screenshot, open Claude Code and run:"
+  echo ""
+  echo "  /forbotsake-marketing-start"
+  echo ""
+  echo "When asked about brand identity, point it to: $SCREENSHOT"
+  echo "Claude will use vision to extract colors, typography, and mood."
+  exit 0
+fi
+
+# URL mode
+URL="$1"
+echo "To extract brand identity from $URL, open Claude Code and run:"
+echo ""
+echo "  /forbotsake-marketing-start"
+echo ""
+echo "When asked about brand identity, share this URL: $URL"
+echo "Claude will screenshot the page and extract colors, typography, and mood."
+echo ""
+echo "Or generate a blank template: brand-extract --template > brand.md"

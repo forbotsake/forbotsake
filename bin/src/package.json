@@ -1,0 +1,11 @@
+{
+  "name": "forbotsake-visual",
+  "version": "0.6.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "satori": "^0.12.0",
+    "@resvg/resvg-js": "^2.6.0",
+    "yaml": "^2.4.0"
+  }
+}

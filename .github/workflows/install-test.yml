@@ -20,7 +20,9 @@ jobs:
         run: mkdir -p ~/.claude/skills
 
       - name: Copy repo to skills directory (simulates git clone)
-        run: cp -r . ~/.claude/skills/forbotsake
+        run: |
+          mkdir -p ~/.claude/skills/forbotsake
+          rsync -a --exclude='.claude' --exclude='.git' . ~/.claude/skills/forbotsake/
 
       - name: Make scripts executable
         run: chmod +x ~/.claude/skills/forbotsake/bin/*.sh
@@ -69,7 +71,8 @@ jobs:
         env:
           GITHUB_WORKSPACE_PATH: ${{ github.workspace }}
         run: |
-          cp -r "$GITHUB_WORKSPACE_PATH" ~/.claude/skills/forbotsake
+          mkdir -p ~/.claude/skills/forbotsake
+          rsync -a --exclude='.claude' --exclude='.git' "$GITHUB_WORKSPACE_PATH/" ~/.claude/skills/forbotsake/
           chmod +x ~/.claude/skills/forbotsake/bin/*.sh
           bash ~/.claude/skills/forbotsake/bin/install.sh
           bash ~/.claude/skills/forbotsake/bin/sync-links.sh --check

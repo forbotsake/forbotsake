@@ -101,7 +101,7 @@ Then present a 3-4 sentence summary:
 
 > "Based on your repo, you're building [product description]. Your tech stack is [stack].
 > Recent activity suggests [what you've been working on]. Your likely audience is [guess].
-> Let me validate that with 5 questions."
+> Let me validate that with 6 questions."
 
 This flips the dynamic from "fill out this form" to "this tool already gets me."
 
@@ -173,9 +173,78 @@ What would you actually SAY to [ICP name]?"
 > Don't overthink it. Given what you said about channels (Q3) and messaging (Q4),
 > what's the single action with the highest chance of reaching [ICP from Q2]?"
 
-## Phase 3: Write strategy.md
+### Q6: Your Position (for founder-profile.md)
 
-After all 5 questions are answered, write `strategy.md` to the project root.
+> "Last question — this one's about YOU, not your product.
+>
+> What communities or organizations are you part of? (YC, indie hackers, specific
+> Slack/Discord groups, open source projects, professional orgs?)
+>
+> Who do you know in your space? Not celebrities — people you could actually
+> message. Former colleagues, fellow founders, community leaders, investors.
+>
+> What's your unfair advantage for reaching your ICP? Maybe you're already
+> active on the channel they use. Maybe you built something they depend on.
+> Maybe you're in the same community."
+
+Push for specifics. "I know some people" is not useful. "I'm a YC founder, I know
+3 other founders building devtools, and I'm active in r/ClaudeAI" is useful.
+
+**Session save after answer:**
+```bash
+echo '{"q": 6, "question": "your_position", "answer": "USER_ANSWER"}' >> "$_SESSION_FILE"
+```
+
+## Phase 3: Write strategy.md AND founder-profile.md
+
+After all 6 questions are answered, write both files.
+
+### Write founder-profile.md
+
+Write to `~/.forbotsake/founder-profile.md`:
+
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+mkdir -p "$FORBOTSAKE_HOME"
+```
+
+```markdown
+---
+schema_version: 1
+generated_by: forbotsake
+generated_at: {ISO timestamp}
+---
+# Founder Profile
+
+## Identity
+- **Name:** {inferred from git config or conversation}
+- **Role:** {from conversation context}
+- **Location:** {if mentioned, else "(Not captured)"}
+
+## Affiliations & Communities
+{from Q6 — list each affiliation with relationship type}
+
+## Key Relationships
+{from Q6 — list each person with nature of relationship}
+
+## Unfair Advantages
+{from Q6 — each advantage with why it matters for marketing}
+
+## Communication Style
+- **Preferred platforms:** {from Q3 — where they scored themselves highest}
+- **Voice/tone:** {from Q4 — how they naturally talk about their product}
+
+## Open Paths
+{Warm introduction paths inferred from Q6 affiliations + Q2 ICP. Which connections
+could introduce you to your ICP or amplify your message?}
+```
+
+Tell the user: "Founder profile saved to `~/.forbotsake/founder-profile.md`.
+This is used by `/forbotsake-sharpen` to find warm paths and tailor outreach."
+
+### Write strategy.md
+
+Write `strategy.md` to the project root.
 
 **Read knowledge frameworks first:**
 ```bash

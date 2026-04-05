@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.4.0 (2026-04-05)
+
+### Added
+- **Adversarial review gates** -- three quality gates that catch bad content before it goes public. forbotsake no longer trusts its own output.
+  - **Strategy Reviewer** (Gate 1, in `/forbotsake-marketing-start`): independent subagent reviews strategy.md for vague positioning, generic ICPs, unjustified channel scores. 5 dimensions, max 2 revision cycles.
+  - **Content Red Team** (Gate 2, in `/forbotsake-content-check`): independent subagent reviews content for AI-slop patterns, voice authenticity, ICP specificity, originality, strategy alignment, and reputation risk. PASS/SOFT_FAIL/HARD_FAIL verdicts with max 2 rewrite iterations.
+  - **Publish Kill Switch** (Gate 3, in `/forbotsake-publish`): final sanity check before content goes public. Scans for banned patterns, factual claims, and embarrassment risk. GO/HOLD verdict, always requires explicit user confirmation.
+- `knowledge/banned-patterns-defaults.md` -- AI-slop pattern blocklist (em-dashes, corporate buzzwords, structural tells). Upgrade-safe defaults.
+- User-extensible banned patterns via `~/.forbotsake/banned-patterns.md`. Survives upgrades.
+- `FORBOTSAKE_FAST=1` env var to skip all adversarial gates during rapid iteration.
+- Gate metrics logging to `~/.forbotsake/review-metrics.jsonl` for retrospective analysis.
+- `status: hard-failed` frontmatter status for content that failed the Content Red Team.
+- `reviewer_notes:` frontmatter field in content files for reviewer feedback (per-file, not global).
+
+### Changed
+- Pipeline updated: UNDERSTAND -> CHALLENGE -> RESEARCH -> PLAN -> SHARPEN -> CREATE -> **RED TEAM** -> REVIEW -> **KILL SWITCH** -> SHIP -> MEASURE.
+- `/forbotsake-content-check` now runs adversarial review (Phase 2.5) before the existing 7-dimension scorecard (Phase 3). Content must pass both.
+- `/forbotsake-create` reads `reviewer_notes:` from content frontmatter to avoid repeating patterns flagged by the Content Red Team.
+- `/forbotsake-go` detects `status: hard-failed` and stops pipeline instead of retrying endlessly. Supports `FORBOTSAKE_FAST=1`.
+- `Agent` added to `allowed-tools` in marketing-start, content-check, and publish skills (required for subagent dispatch).
+- CLAUDE.md updated with Quality Gates section and new pipeline diagram.
+- README updated with Quality Gates documentation and revised pipeline.
+
 ## 0.3.1 (2026-04-05)
 
 ### Added

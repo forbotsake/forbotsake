@@ -44,6 +44,19 @@ echo "1" > "$_ORCH_FLAG"
 echo "ORCHESTRATED: 1"
 echo "ORCH_FLAG: $_ORCH_FLAG"
 
+# Fast mode propagation (skip adversarial gates)
+# Env vars don't propagate across Skill tool invocations, so use file flag (same pattern as orchestrated mode)
+FORBOTSAKE_FAST="${FORBOTSAKE_FAST:-0}"
+_FAST_FLAG="$FORBOTSAKE_HOME/fast-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+if [ "$FORBOTSAKE_FAST" = "1" ]; then
+  echo "1" > "$_FAST_FLAG"
+  echo "NOTE: Fast mode active. Adversarial review gates will be skipped."
+elif [ -f "$_FAST_FLAG" ]; then
+  FORBOTSAKE_FAST=$(cat "$_FAST_FLAG" 2>/dev/null || echo 0)
+fi
+echo "FAST_MODE: $FORBOTSAKE_FAST"
+echo "FAST_FLAG: $_FAST_FLAG"
+
 # Pipeline state detection
 echo "--- PIPELINE STATE ---"
 
@@ -68,9 +81,11 @@ if [ -d content ] && ls content/*.md 1>/dev/null 2>&1; then
   echo "CONTENT_COUNT: $CONTENT_COUNT"
   # Check review status via frontmatter
   DRAFT_COUNT=$(grep -l -e 'status: draft' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  HARD_FAILED_COUNT=$(grep -l -e 'status: hard-failed' content/*.md 2>/dev/null | wc -l | tr -d ' ')
   REVIEWED_COUNT=$(grep -l -e 'status: reviewed' -e 'status: revised' -e 'status: reviewed-override' content/*.md 2>/dev/null | wc -l | tr -d ' ')
   PUBLISHED_COUNT=$(grep -l -e 'status: published' content/*.md 2>/dev/null | wc -l | tr -d ' ')
   echo "DRAFT_COUNT: $DRAFT_COUNT"
+  echo "HARD_FAILED_COUNT: $HARD_FAILED_COUNT"
   echo "REVIEWED_COUNT: $REVIEWED_COUNT"
   ls -1t content/*.md 2>/dev/null | head -5
 else
@@ -122,6 +137,17 @@ IF STRATEGY is missing:
   → Start at STAGE 1 (strategy)
 ELIF CONTENT is missing:
   → Start at STAGE 3 (create)
+ELIF HARD_FAILED_COUNT > 0 AND DRAFT_COUNT = 0 AND REVIEWED_COUNT = 0 (only hard-failed content, nothing else to process):
+  → Tell user: "{HARD_FAILED_COUNT} content file(s) failed adversarial review.
+    Run /forbotsake-create to rewrite, or /forbotsake-content-check to override."
+  → Clean up flags before stopping:
+    ```bash
+    rm -f "$_ORCH_FLAG" "$_FAST_FLAG" 2>/dev/null
+    ```
+  → Stop. Do not proceed to publish with only hard-failed content.
+ELIF HARD_FAILED_COUNT > 0 AND (DRAFT_COUNT > 0 OR REVIEWED_COUNT > 0):
+  → Warn: "{HARD_FAILED_COUNT} file(s) are hard-failed (will be skipped). Processing remaining content."
+  → Continue with drafts/reviewed content. Do not block the entire pipeline for unrelated files.
 ELIF DRAFT_COUNT > 0 (unreviewed content exists):
   → Start at STAGE 4 (review)
 ELIF REVIEWED_COUNT > 0 (reviewed but not published):
@@ -269,7 +295,8 @@ Clean up state file and orchestrated flag:
 ```bash
 _STATE_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
 _ORCH_FLAG="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
-rm -f "$_STATE_FILE" "$_ORCH_FLAG" 2>/dev/null
+_FAST_FLAG="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/fast-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+rm -f "$_STATE_FILE" "$_ORCH_FLAG" "$_FAST_FLAG" 2>/dev/null
 ```
 
 ## Dry Run Mode

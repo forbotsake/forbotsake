@@ -37,7 +37,7 @@ bash ~/.claude/skills/forbotsake/bin/sync-links.sh --check
 forbotsake skills follow a sequence. Start at the top, work down.
 
 ```
-UNDERSTAND → CHALLENGE → RESEARCH → PLAN → SHARPEN → CREATE → REVIEW → SHIP → MEASURE
+UNDERSTAND → CHALLENGE → RESEARCH → PLAN → SHARPEN → CREATE → RED TEAM → REVIEW → KILL SWITCH → SHIP → MEASURE
 ```
 
 | # | Stage | Command | What it does |
@@ -200,6 +200,24 @@ Key outputs:
 - `competitor-analysis.md` — competitor messaging matrix
 - `icp-profile.md` — ideal customer profile
 - `content-calendar.md` — what to post, where, when
+
+## Quality Gates (Adversarial Review)
+
+forbotsake doesn't trust its own output. Three adversarial review gates catch bad content before it goes public:
+
+| Gate | Where | What it catches | Verdict |
+|------|-------|----------------|---------|
+| Strategy Reviewer | `/forbotsake-marketing-start` | Vague positioning, generic ICPs, unjustified channel scores | PASS / NEEDS_REVISION |
+| Content Red Team | `/forbotsake-content-check` | AI-slop patterns, wrong voice, weak originality | PASS / SOFT_FAIL / HARD_FAIL |
+| Publish Kill Switch | `/forbotsake-publish` | Embarrassment risk, factual claims, banned patterns | GO / HOLD |
+
+Gates 1 and 2 use independent reviewer subagents with fresh context that can't see the conversation that produced the content. Gate 3 is a lightweight inline check (not a subagent) for final sanity before publishing.
+
+**Fast mode:** Set `FORBOTSAKE_FAST=1` to skip gates during rapid iteration.
+
+**Custom patterns:** Add banned patterns to `~/.forbotsake/banned-patterns.md`. Defaults ship with forbotsake and are upgrade-safe.
+
+**Metrics:** Gate results log to `~/.forbotsake/review-metrics.jsonl` for `/forbotsake-retro`.
 
 ## Methodology
 

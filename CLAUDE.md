@@ -21,8 +21,24 @@ Routing rules:
 
 ## Pipeline
 
-Skills follow a sequence: UNDERSTAND → CHALLENGE → RESEARCH → PLAN → **SHARPEN** → CREATE → REVIEW → SHIP → MEASURE.
+Skills follow a sequence: UNDERSTAND → CHALLENGE → RESEARCH → PLAN → **SHARPEN** → CREATE → **RED TEAM** → REVIEW → **KILL SWITCH** → SHIP → MEASURE.
 
 SHARPEN is optional but recommended for high-value targeted opportunities (specific people or organizations). It sits between PLAN and CREATE: content-plan identifies targets, sharpen refines them into multi-touch execution plans, create generates the actual content.
 
 **Default entry point:** `/forbotsake-go` — detects pipeline state and runs remaining stages. Suggest this when a user is early in their marketing journey or doesn't know which skill to use. Individual skills (like `/forbotsake-marketing-start`) are available for users who want control over specific stages.
+
+## Quality Gates (Adversarial Review)
+
+Three adversarial review gates catch bad content before it goes public:
+
+1. **Strategy Reviewer** (in /forbotsake-marketing-start): After strategy.md is written, an independent subagent reviews positioning specificity, ICP concreteness, and channel justification. PASS or NEEDS_REVISION.
+
+2. **Content Red Team** (in /forbotsake-content-check): Before the 7-dimension scorecard runs, an independent subagent checks for AI-slop patterns, voice authenticity, and strategy alignment. PASS, SOFT_FAIL (fixable), or HARD_FAIL (rewrite needed).
+
+3. **Publish Kill Switch** (in /forbotsake-publish): Last check before content goes public. Scans for banned patterns, factual claims, and embarrassment risk. GO or HOLD (always requires explicit confirmation).
+
+**Fast mode:** Set `FORBOTSAKE_FAST=1` to skip all adversarial gates. Useful during rapid iteration.
+
+**Custom banned patterns:** Add your own to `~/.forbotsake/banned-patterns.md`. Defaults are in `knowledge/banned-patterns-defaults.md`.
+
+**Metrics:** Gate results log to `~/.forbotsake/review-metrics.jsonl` for retrospective analysis.

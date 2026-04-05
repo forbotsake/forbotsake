@@ -123,6 +123,21 @@ Read `strategy.md` completely. Extract and internalize:
 4. **Messaging pillars** -- the 3 claims with proof points
 5. **Brand voice** -- if defined, note the tone (if not defined, default to: direct, specific, no jargon, conversational)
 
+### Reviewer Notes Check
+
+Check if there are previous reviewer notes from a HARD_FAIL or SOFT_FAIL in
+/forbotsake-content-check. If the user is re-creating content after a failed review,
+the content file may have `reviewer_notes:` in its frontmatter.
+
+If the user specified a content file to rewrite, read its frontmatter. If `reviewer_notes:`
+exists, extract the findings and use them as constraints for this creation session:
+
+> "I found reviewer notes from a previous review. I'll avoid these issues:
+> {for each reviewer note: dimension and fix suggestion}"
+
+Incorporate these constraints into the content generation. Do not repeat the patterns
+the reviewer flagged.
+
 If `content-calendar.md` exists, read it and extract:
 - Current week's theme and messaging pillar focus
 - Specific content slots that haven't been created yet

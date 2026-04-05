@@ -85,12 +85,15 @@ else
 fi
 ```
 
-If the preamble output shows `UPGRADE_AVAILABLE <old> <new>`: tell the user
-"forbotsake v{new} is available (you're on v{old}). Run `/forbotsake-upgrade` to update."
-Then continue with the skill normally. Do not block on the upgrade.
+If output shows `UPGRADE_AVAILABLE <old> <new>`: read the forbotsake-upgrade SKILL.md
+at `$_FBS_ROOT/forbotsake-upgrade/SKILL.md` (where `_FBS_ROOT` is the variable already
+resolved in the preamble bash above) and follow the "Inline upgrade flow" section **Step 1
+only**. If Step 1 results in "Yes" or "Always" (proceed with upgrade), continue through
+Steps 2-7 of the inline flow. If Step 1 results in "Not now" or "Never" (declined),
+skip Steps 2-7 entirely and continue with this skill immediately.
 
-If the output shows `JUST_UPGRADED <old> <new>`: tell the user
-"Running forbotsake v{new} (just updated!)." Then continue.
+If output shows `JUST_UPGRADED <old> <new>`: tell user
+"Running forbotsake v{new} (just updated from v{old})!" and continue.
 
 If `STRATEGY_EXISTS` is `no`:
 

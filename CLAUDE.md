@@ -14,7 +14,7 @@ Routing rules:
 - "content calendar", "what should I post", "content plan" → invoke forbotsake-content-plan
 - "write a post", "create content", "draft a thread", "write marketing copy" → invoke forbotsake-create
 - "review before publishing", "check this content", "is this ready to post" → invoke forbotsake-content-check
-- "post this", "publish", "schedule", "automate posting" → invoke forbotsake-publish
+- "post this", "publish", "schedule", "automate posting", "post to X", "publish to LinkedIn", "auto-post" → invoke forbotsake-publish
 - "marketing retro", "what worked this week", "marketing review" → invoke forbotsake-retro
 - "upgrade forbotsake", "update forbotsake", "get latest version" → invoke forbotsake-upgrade
 

@@ -238,6 +238,28 @@ Check for:
 **PASS criteria:** Reading only the first line, the ICP would want to read the second.
 **FAIL example:** "Opens with 'Excited to announce...' -- nobody stops scrolling for your excitement. Lead with the benefit."
 
+### Dimension 8: Visual Consistency (schema_version 2 only)
+
+If the content file has `schema_version: 2` and `visual_treatment` is not `none`, check:
+
+1. **Visual treatment appropriateness:** Does the chosen treatment (text-card/ai-image/video) fit the channel and content type? Flag mismatches:
+   - Product Hunt launch with `visual_treatment: none` → "Product Hunt posts need gallery images. Recommend ai-image."
+   - LinkedIn post with `visual_treatment: none` → "LinkedIn posts with images get 2x engagement. Consider text-card or ai-image."
+   - HN post with `visual_treatment: ai-image` → "Hacker News is text-focused. Visual adds no value here."
+
+2. **Visual prompt quality:** Does `visual_prompt` reference brand elements from brand.md?
+   - Check if prompt includes brand colors or style descriptors
+   - Check if prompt relates to the content's actual topic (not generic)
+
+3. **Visual asset existence:** If `visual_status` is `generated`, check that the visual file actually exists at the expected path.
+
+4. **Accessibility:** Does `visual_alt` provide a meaningful description? Not just "image" or empty — it should describe what's depicted for screen readers.
+
+5. **If visual file exists:** Use the Read tool to display the image to the user. Ask: "Does this image match your brand and content? Quick visual sanity check."
+
+**PASS criteria:** Visual treatment fits the channel, prompt references brand, asset exists, alt text is meaningful.
+**FAIL example:** "visual_treatment is ai-image but visual_status is 'failed'. No image file exists. Either regenerate or switch to text-card."
+
 ## Phase 4: Deliver the Verdict
 
 Present the review as a scorecard:
@@ -254,6 +276,7 @@ Present the review as a scorecard:
 | CTA Clarity | PASS/FAIL | {one-line summary} |
 | Length | PASS/FAIL | {one-line summary} |
 | Hook Strength | PASS/FAIL | {one-line summary} |
+| Visual Consistency | PASS/FAIL/N/A | {one-line summary} |
 
 **Overall: READY TO PUBLISH / NEEDS REVISION**
 ```

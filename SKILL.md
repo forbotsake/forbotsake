@@ -42,20 +42,21 @@ You can build the product. This helps you sell it.
 Skills follow a sequence. Start at the top, work down.
 
 ```
-UNDERSTAND → CHALLENGE → RESEARCH → PLAN → CREATE → REVIEW → SHIP → MEASURE
+UNDERSTAND → CHALLENGE → RESEARCH → PLAN → SHARPEN → CREATE → REVIEW → SHIP → MEASURE
 ```
 
 | # | Stage | Command | What it does |
 |---|-------|---------|-------------|
-| 1 | UNDERSTAND | `/forbotsake-marketing-start` | Ask 5 hard questions, produce strategy.md |
+| 1 | UNDERSTAND | `/forbotsake-marketing-start` | Ask 6 hard questions, produce strategy.md + brand.md |
 | 2 | CHALLENGE | `/forbotsake-cmo-check` | Push back on your strategy, score it |
 | 3 | RESEARCH | `/forbotsake-spy` | Browse competitors, build messaging matrix |
 | 4 | RESEARCH | `/forbotsake-icp` | Deep-dive ideal customer profile |
-| 5 | PLAN | `/forbotsake-content-plan` | Content calendar: themes, formats, cadence |
-| 6 | CREATE | `/forbotsake-create` | Write actual content: X threads, posts, emails |
-| 7 | REVIEW | `/forbotsake-content-check` | Pre-publish check: brand voice, messaging |
-| 8 | SHIP | `/forbotsake-publish` | Format for platform, copy-paste ready |
-| 9 | MEASURE | `/forbotsake-retro` | Weekly retro: what worked, what to change |
+| 5 | PLAN | `/forbotsake-content-plan` | Content calendar with visual treatment suggestions |
+| 5.5 | SHARPEN | `/forbotsake-sharpen` | Research targets, map connections, build multi-touch plans |
+| 6 | CREATE | `/forbotsake-create` | Write content + generate visuals (images, text-cards, video) |
+| 7 | REVIEW | `/forbotsake-content-check` | Pre-publish check: brand voice, messaging, visual consistency |
+| 8 | SHIP | `/forbotsake-publish` | Post with media via Chrome, or copy-paste with image paths |
+| 9 | MEASURE | `/forbotsake-retro` | Weekly retro: what worked, visual performance tracking |
 
 ### One Command: `/forbotsake-go`
 

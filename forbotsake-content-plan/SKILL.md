@@ -241,9 +241,16 @@ Status: ACTIVE
 
 **Focus:** {messaging pillar 1 description}
 
-| Day | Channel | Type | Topic idea | Est. time |
-|-----|---------|------|-----------|-----------|
-{specific content slots for the week}
+| Day | Channel | Type | Topic idea | Visual | Est. time |
+|-----|---------|------|-----------|--------|-----------|
+{specific content slots for the week, with visual treatment recommendation}
+
+**Visual column guidelines:**
+- `none` for hot takes, HN posts, Reddit comments, quick replies
+- `text-card` for stat highlights, quote cards, key takeaways
+- `ai-image` for launch posts, storytelling, blog headers, Product Hunt
+- `video` for product demos, launch teasers, explainer shorts
+- Default by channel: X thread → `ai-image` (hero), LinkedIn → `ai-image`, Blog → `ai-image`, Email → `none`, HN/Reddit → `none`
 
 **Week 1 total:** {estimated hours}
 

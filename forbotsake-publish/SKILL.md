@@ -25,6 +25,8 @@ allowed-tools:
   - mcp__claude-in-chrome__get_page_text
   - mcp__claude-in-chrome__find
   - mcp__claude-in-chrome__computer
+  - mcp__claude-in-chrome__upload_image
+  - mcp__claude-in-chrome__javascript_tool
 ---
 
 # /forbotsake-publish
@@ -158,6 +160,31 @@ If CHROME_AVAILABLE is yes AND the selected platform is X/Twitter or LinkedIn, u
 For blog platforms, Reddit, HN, and Product Hunt: if Chrome is available, offer to open the platform's compose page in a new Chrome tab after formatting. This is a "COPY + deep link" flow — you format the content, open the compose URL, and the user pastes it in.
 
 For Email and GitHub: always COPY mode (email ESPs vary too much for automation; GitHub uses `gh` CLI).
+
+## Phase 1.5: Visual Asset Detection
+
+For each selected content file, check if visual assets exist alongside it:
+
+```bash
+# For a content file like content/2026-04-07-x-launch-thread.md
+# Look for: content/2026-04-07-x-launch-thread-visual-*.png or *.mp4
+ls content/*-visual-*.{png,jpg,mp4} 2>/dev/null
+```
+
+Also read the content file's frontmatter for visual metadata:
+- `visual_treatment`: none/text-card/ai-image/video
+- `visual_status`: generated/failed/pending/skipped
+- `visual_alt`: accessibility description
+
+**If visual assets exist** (`visual_status: generated`):
+- Note which files are available and their paths
+- These will be attached during posting (Phase 4)
+
+**If visual_treatment is not `none` but no visual file exists** (`visual_status: failed/pending/skipped`):
+- **Interactive mode:** Warn the user: "This {channel} post has visual treatment '{visual_treatment}' but no image was generated. Options: A) Publish text-only B) Generate the image now C) Cancel"
+- **Orchestrated mode:** Publish text-only, log the missing visual
+
+**If visual_treatment is `none`:** No visual handling needed, proceed normally.
 
 ## Phase 2: Format for Platform
 
@@ -317,9 +344,15 @@ Present the formatted content to the user with:
 >
 > {formatted content}
 >
+> {If visual asset exists: "**Attach this image:** `{path to visual file}`
+> Alt text: {visual_alt from frontmatter}"}
+>
+> {If visual_treatment is video and video file exists: "**Attach this video:** `{path to video file}`"}
+>
 > Before you post, double-check:
 > - [ ] Links are correct
 > - [ ] Handle/username is right
+> - [ ] {If visual: "Image/video is attached"}
 > - [ ] Timing is good (see send time suggestion if applicable)
 >
 > Want me to format this for another platform too?"
@@ -373,13 +406,18 @@ Fall back to COPY mode and deliver the formatted text.
 #### Step 4c: Fill Content
 
 **X/Twitter single tweet:**
-1. Use `mcp__claude-in-chrome__computer` to click the compose textarea
-2. Use `mcp__claude-in-chrome__computer` to type the tweet text
-3. Take a screenshot: `screencapture -x /tmp/forbotsake-pre-post-$(date +%s).png` and then use the Read tool to show it to the user. If screencapture fails (non-macOS), skip the screenshot and continue.
+1. **If visual asset exists:** Attach image FIRST before typing text.
+   - Use `mcp__claude-in-chrome__upload_image` with the visual file path to upload the image to the compose area.
+   - If `upload_image` tool is not available: use `mcp__claude-in-chrome__computer` to click the media icon (camera/image button), then try attaching via the file dialog. If that fails, fall back to COPY mode with the image path noted.
+   - Wait for the image preview to appear in the compose area before continuing.
+2. Use `mcp__claude-in-chrome__computer` to click the compose textarea
+3. Use `mcp__claude-in-chrome__computer` to type the tweet text
+4. Take a screenshot: `screencapture -x /tmp/forbotsake-pre-post-$(date +%s).png` and then use the Read tool to show it to the user. If screencapture fails (non-macOS), skip the screenshot and continue.
 
 **X/Twitter thread:**
-1. Use `mcp__claude-in-chrome__computer` to click the compose textarea
-2. Type tweet 1 text
+1. **If visual asset exists:** Attach image to tweet 1 (hero placement) using `mcp__claude-in-chrome__upload_image` BEFORE typing text. If `visual_count` > 1, attach subsequent images to their corresponding tweets.
+2. Use `mcp__claude-in-chrome__computer` to click the compose textarea
+3. Type tweet 1 text
 3. Look for the thread "+" button (usually near the bottom of the compose area) and click it
 4. A new tweet textarea appears. Type tweet 2 text.
 5. Repeat for all tweets in the thread.
@@ -398,9 +436,13 @@ Fall back to COPY mode and deliver the formatted text.
 4. Show the user: "Thread partially posted ({N}/{total} tweets). Here are the remaining tweets to post manually: {remaining tweets formatted}."
 
 **LinkedIn post:**
-1. Use `mcp__claude-in-chrome__computer` to click the compose area in the modal
-2. Type the post content
-3. Take a screenshot using `screencapture` as pre-post evidence
+1. **If visual asset exists:** Attach image FIRST.
+   - Use `mcp__claude-in-chrome__upload_image` to upload the image into the LinkedIn compose modal.
+   - If it's a carousel (multiple text-cards), upload as a PDF document using the document attachment option.
+   - Wait for the image/document preview to appear.
+2. Use `mcp__claude-in-chrome__computer` to click the compose area in the modal
+3. Type the post content
+4. Take a screenshot using `screencapture` as pre-post evidence
 
 #### Step 4d: Confirm and Post
 
@@ -456,6 +498,7 @@ Append to `published-log.md` in the project root. Create the file if it doesn't 
 - **Format:** {thread/blog/email/linkedin/other}
 - **Mode:** POST
 - **Link:** {captured URL}
+- **Visual:** {visual_treatment} via {visual_provider} — {path to visual file or "none"}
 - **Notes:** {any relevant context}
 
 ---
@@ -470,7 +513,8 @@ Append to `published-log.md` in the project root. Create the file if it doesn't 
 - **Format:** {thread/blog/email/linkedin/other}
 - **Mode:** COPY
 - **Link:** pending
-- **Notes:** Copy-paste delivered. Update link after posting.
+- **Visual:** {visual_treatment} via {visual_provider} — {path to visual file or "none"}
+- **Notes:** Copy-paste delivered. Update link after posting. {If visual exists: "Attach image: {path}"}
 
 ---
 ```

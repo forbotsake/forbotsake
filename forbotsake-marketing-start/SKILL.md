@@ -317,6 +317,75 @@ targeting [specific persona]. Post it at 10am PT. Include [specific hook]. End w
 {Anything unresolved from the conversation. Things to validate with real users.}
 ```
 
+## Phase 3.5: Brand Visual Identity
+
+After writing strategy.md and founder-profile.md, create the brand visual identity.
+
+> "Now let's define your visual identity. This lets forbotsake generate images
+> and text-cards that match your brand when you create content."
+
+**Read the brand identity framework:**
+```bash
+_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-marketing-start/SKILL.md" -type f 2>/dev/null | head -1)")
+echo "SKILL_DIR: $_SKILL_DIR"
+```
+
+Read `$_SKILL_DIR/../knowledge/frameworks/brand-identity.md` for the full schema.
+
+**Auto-extraction path (preferred):**
+
+Check if the user mentioned a website URL in their strategy.md or conversation:
+- If URL available: "I can extract your brand identity from your website. Let me screenshot it and pull colors, typography, and visual mood."
+  1. Use Chrome automation to screenshot the URL
+  2. Pass the screenshot to Claude with: "Extract the dominant color palette (hex codes for primary, accent, background, text), typography feel (serif/sans-serif, modern/classic), and visual mood (3 adjectives) from this webpage. Output as YAML matching the brand.md schema."
+  3. Present the extracted brand.md to the user for approval before saving
+- If no URL: proceed to manual path
+
+**Manual path:**
+
+Ask via AskUserQuestion:
+
+> "Let's define your visual identity for generated images and cards.
+>
+> 1. What's your primary brand color? (hex code like #1a1a2e, or describe: 'dark blue')
+> 2. What's your accent color? (the pop of color for CTAs and highlights)
+> 3. How would you describe your visual style? (e.g., 'minimal and technical', 'bold and playful', 'clean and professional')
+> 4. What type of images fit your brand? (e.g., 'flat illustrations', 'photography', 'abstract geometric', 'diagrams')
+> 5. Anything to avoid? (e.g., 'no stock photos', 'no clipart', 'nothing corporate')"
+
+Write `brand.md` to the project root:
+
+```markdown
+---
+schema_version: 1
+generated_by: forbotsake
+generated_at: {ISO timestamp}
+---
+name: "{product name from strategy.md}"
+colors:
+  primary: "{from Q1}"
+  accent: "{from Q2}"
+  background: "#f5f5f5"
+  text: "#1a1a2e"
+typography:
+  mood: "{from Q3, e.g., 'modern sans-serif, clean, technical'}"
+  heading_style: "bold, uppercase for short titles"
+visual_style:
+  mood: [{from Q3, as array of adjectives}]
+  image_type: "{from Q4}"
+  avoid: [{from Q5, as array}]
+logo:
+  path: ""
+  placement: "bottom-right"
+prompt_prefix: "{auto-generated from above: combine image_type + mood + color references}"
+```
+
+**Validation:** Check that colors.primary and colors.accent are valid hex codes (regex: `^#[0-9a-fA-F]{6}$`). If user gave a color name, convert to hex.
+
+Tell the user: "Brand identity saved to `brand.md`. This is used by `/forbotsake-create` to generate on-brand images and text-cards."
+
+**Orchestrated mode (`ORCHESTRATED` is `1`):** If brand.md already exists, skip this phase. If it doesn't exist, use the auto-extraction path if a URL is available, otherwise skip with a note: "No brand.md found. Visual generation will use default styles. Run `/forbotsake-marketing-start` interactively to set up brand identity."
+
 ## Phase 4: Self-Test
 
 After writing strategy.md, read it back and check:

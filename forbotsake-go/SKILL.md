@@ -90,6 +90,21 @@ else
   echo "PUBLISHED_LOG: missing"
 fi
 
+# Multi-modal: check brand.md and media-providers.md
+[ -f brand.md ] && echo "BRAND: exists" || echo "BRAND: missing"
+if [ -f media-providers.md ]; then
+  echo "MEDIA_PROVIDERS: exists"
+else
+  echo "MEDIA_PROVIDERS: missing"
+  # Auto-detect available providers
+  echo "--- PROVIDER DETECTION ---"
+  command -v bun >/dev/null 2>&1 && echo "SATORI: yes (bun)" || { command -v node >/dev/null 2>&1 && echo "SATORI: yes (node)" || echo "SATORI: no"; }
+  echo "CHROME_MCP: check-at-runtime"
+  [ -n "$NANO_BANANA_API_KEY" ] && echo "NANO_BANANA: yes" || echo "NANO_BANANA: no"
+  [ -n "$SEEDANCE_API_KEY" ] && echo "SEEDANCE: yes" || echo "SEEDANCE: no"
+  echo "--- END DETECTION ---"
+fi
+
 # State file for resume
 _STATE_FILE="$FORBOTSAKE_HOME/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
 if [ -f "$_STATE_FILE" ]; then
@@ -160,6 +175,29 @@ echo "timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$_STATE_FILE"
 
 Brief transition: "Strategy done. Now let's create some content."
 
+### STAGE 1.5: Media Providers Setup (if needed)
+
+If `MEDIA_PROVIDERS` is `missing`, auto-generate `media-providers.md` based on detected capabilities:
+
+Read the provider framework:
+```bash
+_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-go/SKILL.md" -type f 2>/dev/null | head -1)")
+_FBS_ROOT=$(cd "${_SKILL_DIR}/.." 2>/dev/null && pwd || true)
+echo "FBS_ROOT: $_FBS_ROOT"
+```
+Read `$_FBS_ROOT/knowledge/frameworks/media-providers.md` for the schema.
+
+Write `media-providers.md` with providers enabled/disabled based on preamble detection:
+- `local-satori`: enabled if bun or node detected
+- `gemini-browser`: enabled if Chrome MCP tools available (test at runtime)
+- `nano-banana-api`: enabled if NANO_BANANA_API_KEY env var set
+- `veo-browser`: disabled by default (video provider)
+- `seedance-api`: enabled if SEEDANCE_API_KEY env var set
+
+Brief: "Set up media providers for visual generation. {N} providers detected."
+
+If `BRAND` is `missing` and `STRATEGY` exists: Note that brand.md is missing. forbotsake-create will work without it using default styles, but recommend running `/forbotsake-marketing-start` interactively to set up brand identity for consistent visuals.
+
 ### STAGE 2: Content Calendar (skip — optional)
 
 Do NOT run forbotsake-content-plan. It's optional and adds friction. The orchestrator
@@ -221,8 +259,10 @@ After publish completes:
 
 ```bash
 # Stage marketing files (only .md files from content/, not binaries or other artifacts)
-git add strategy.md content/*.md published-log.md content-calendar.md 2>/dev/null
+git add strategy.md content/*.md published-log.md content-calendar.md brand.md media-providers.md 2>/dev/null
 git add forbotsake-strategy.md forbotsake-content-calendar.md 2>/dev/null
+# Stage visual assets alongside content
+git add content/*-visual-*.png content/*-video-*.mp4 2>/dev/null
 
 # Check if there are changes to commit
 if ! git diff --cached --quiet 2>/dev/null; then

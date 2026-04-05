@@ -44,6 +44,20 @@ echo "1" > "$_ORCH_FLAG"
 echo "ORCHESTRATED: 1"
 echo "ORCH_FLAG: $_ORCH_FLAG"
 
+# Tick mode detection (file-based, set by bin/forbotsake-cron)
+# Use path hash to match bin/forbotsake-cron's naming (avoids basename collisions)
+_PROJECT_HASH=$(echo "$(git rev-parse --show-toplevel 2>/dev/null || pwd)" | md5 2>/dev/null | cut -c1-8 || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
+_TICK_FLAG="$FORBOTSAKE_HOME/tick-$_PROJECT_HASH"
+if [ -f "$_TICK_FLAG" ]; then
+  FORBOTSAKE_TICK=1
+  TICK_CONTENT_FILE=$(cat "$_TICK_FLAG")
+  echo "TICK_MODE: 1"
+  echo "TICK_FILE: $TICK_CONTENT_FILE"
+else
+  FORBOTSAKE_TICK=0
+  echo "TICK_MODE: 0"
+fi
+
 # Fast mode propagation (skip adversarial gates)
 # Env vars don't propagate across Skill tool invocations, so use file flag (same pattern as orchestrated mode)
 FORBOTSAKE_FAST="${FORBOTSAKE_FAST:-0}"
@@ -84,6 +98,10 @@ if [ -d content ] && ls content/*.md 1>/dev/null 2>&1; then
   HARD_FAILED_COUNT=$(grep -l -e 'status: hard-failed' content/*.md 2>/dev/null | wc -l | tr -d ' ')
   REVIEWED_COUNT=$(grep -l -e 'status: reviewed' -e 'status: revised' -e 'status: reviewed-override' content/*.md 2>/dev/null | wc -l | tr -d ' ')
   PUBLISHED_COUNT=$(grep -l -e 'status: published' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  POSTING_COUNT=$(grep -l -e 'status: posting' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  FAILED_COUNT=$(grep -l -e 'status: failed' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  echo "POSTING_COUNT: $POSTING_COUNT"
+  echo "FAILED_COUNT: $FAILED_COUNT"
   echo "DRAFT_COUNT: $DRAFT_COUNT"
   echo "HARD_FAILED_COUNT: $HARD_FAILED_COUNT"
   echo "REVIEWED_COUNT: $REVIEWED_COUNT"
@@ -125,6 +143,30 @@ and follow the "Inline upgrade flow" section Step 1 only. If upgrade proceeds, c
 If declined, continue with this skill immediately.
 
 If `JUST_UPGRADED <old> <new>`: "Running forbotsake v{new} (just updated!)." Continue.
+
+## Tick Mode (autonomous cron posting)
+
+If `TICK_MODE` is `1`, this is an autonomous cron invocation. Hard constraints apply:
+
+1. **Stage 5 ONLY.** Do not run Stages 1-4 (strategy, create, review). Tick mode is exclusively for publishing already-reviewed content.
+2. Read `TICK_FILE` to get the content file path.
+3. Read the content file. Verify its frontmatter has `status: reviewed`, `status: revised`, or `status: reviewed-override`. If not, log "Content file {path} has status {actual}, expected reviewed. Skipping." and exit.
+4. Set the content file frontmatter to `status: posting` (atomic claim to prevent double-posts).
+5. Invoke `/forbotsake-publish` in orchestrated mode for that single file. Pass the file path explicitly in the prompt, do NOT rely on status-based auto-selection (the file is now in `posting` status, not `reviewed`).
+6. On success: set `status: published` in the content file frontmatter.
+7. On failure: set `status: failed` in the content file frontmatter. Write a failure receipt to `published-log.md`.
+8. Clean up: remove the tick flag file. Remove the orchestrated flag file.
+9. Exit. Do not show "Next Steps" or suggest other skills.
+
+**Important:** In tick mode, skip Phase 1, Phase 2 Stages 1-4, Phase 3, and all interactive prompts. Go directly to Stage 5 (publish) for the single specified file.
+
+If the tick flag file does not contain a valid content file path, log the error and exit.
+
+**Recovery for stuck `posting` status:** If `POSTING_COUNT` > 0 in the preamble output, check each file with `status: posting`. If the file's modification time is older than 2 hours (use `stat -f %m` on macOS), reset it to `status: failed` and log: "Recovered stuck posting file {path}, set to failed." This prevents token drain from repeatedly launching Claude for a file that will never pass the status check.
+
+**Headless safety guard:** If `TICK_MODE` is `0` BUT the `claude -p` prompt text contains "tick mode" or "tick flag" (indicating the caller expected tick mode), log "WARN: Tick mode requested but flag file not found. Exiting to prevent uncontrolled pipeline run." and exit. Do not fall through to the interactive flow.
+
+If `TICK_MODE` is `0` and no tick-mode language is in the prompt, continue with normal interactive/orchestrated flow below.
 
 ## Phase 1: Determine Starting Point
 

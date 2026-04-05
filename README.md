@@ -63,6 +63,134 @@ UNDERSTAND → CHALLENGE → RESEARCH → PLAN → SHARPEN → CREATE → REVIEW
 
 Then work through the pipeline: challenge it, research competitors, plan content, create it, review it, ship it, measure it.
 
+## See it work
+
+Real conversation. A developer who built a DB migration CLI with 800 GitHub stars and zero paying users.
+
+```
+You:    I built a migration tool. I should probably tweet about it or something.
+
+You:    /forbotsake-marketing-start
+
+Claude: Before you tweet anything — 6 questions. These will hurt.
+
+        1. "Who specifically has this problem?" Not "developers." Which
+           developers, at which companies, hitting which wall, right now?
+
+        2. "What do they do today without your tool?" If the answer is
+           "nothing" — you don't have a market. If the answer is
+           "a painful manual process" — now we're talking.
+
+You:    Platform engineers at Series B+ startups. They manage 50-200
+        microservices. Schema changes break staging every week. They
+        use Flyway or hand-rolled bash scripts. It's a mess.
+
+Claude: Stop. You said "migration tool." But what you actually described
+        is a schema coordination layer for platform teams.
+
+        "Migration tool" competes with Flyway, Liquibase, and 40 others.
+        "Schema coordination for platform teams" has 3 competitors and
+        none of them nail the multi-service case.
+
+        [writes strategy.md — positioning, ICP, 3 channels, messaging
+         pillars, founder profile with your network mapped]
+
+You:    /forbotsake-cmo-check
+
+Claude: Your strategy has problems.
+
+        Positioning: STRONG. "Schema coordination" is a real gap.
+        ICP: WEAK. "Series B+" is not specific enough.
+        → Who is the buyer? The platform eng lead? The VP Eng?
+           Different person = different message = different channel.
+        Channels: ADEQUATE. But you listed "Twitter, HN, blog."
+           That's what everyone lists. Where do platform engineers
+           actually go when they have this problem?
+        → Kubernetes Slack, CNCF channels, PlatformCon talks.
+
+        Score: 6/10. Strong core, weak distribution.
+        [rewrites the weak sections, asks you to approve]
+
+You:    /forbotsake-spy
+
+Claude: [researches Flyway, Liquibase, Atlas, PlanetScale, Bytebase]
+
+        Messaging matrix:
+        ┌──────────────┬─────────┬─────────┬──────────┬─────────┐
+        │              │ Flyway  │ Atlas   │ Bytebase │ You     │
+        ├──────────────┼─────────┼─────────┼──────────┼─────────┤
+        │ Multi-svc    │ ✗       │ partial │ ✗        │ ✓ core  │
+        │ Platform eng │ ✗       │ ✗       │ ✓        │ ✓       │
+        │ Zero-config  │ ✗       │ ✓       │ ✗        │ ✓       │
+        └──────────────┴─────────┴─────────┴──────────┴─────────┘
+
+        Whitespace found: nobody owns "multi-service schema
+        coordination." That's your lane.
+
+You:    /forbotsake-icp
+
+Claude: [researches platform engineering communities, content habits,
+         daily workflows, pain triggers]
+
+        Your buyer: Senior Platform Engineer, 3-7 YOE, mass hiring org.
+        They mass-approve PRs on Fridays. Schema breaks hit Monday morning.
+        They read: platformengineering.org, r/kubernetes, KubeCon recaps.
+        They trust: peer recommendations in Slack, not blog posts.
+        → Content that works: war stories, incident post-mortems, demos.
+        → Content that fails: "10 best practices" listicles.
+
+You:    /forbotsake-content-plan
+
+Claude: 4-week calendar based on your capacity (5 hrs/week):
+
+        Week 1: "The Monday Morning Schema Fire" — X thread + HN post
+        Week 2: "Why we stopped using Flyway at 80 services" — blog
+        Week 3: Live demo in Platform Engineering Slack
+        Week 4: PlatformCon CFP submission + LinkedIn post
+
+You:    /forbotsake-create — write the Week 1 X thread
+
+Claude: [reads your strategy, ICP, competitor whitespace, channel format]
+
+        Thread draft (7 tweets):
+        1/ Every Monday at 9am, platform teams play the same game:
+           "which schema change broke staging this time?"
+           After managing migrations across 120 services, I built
+           the tool I wished existed. Here's what I learned 🧵
+        [... 6 more tweets, each with a specific technical insight,
+         ending with a soft CTA to the GitHub repo]
+
+You:    /forbotsake-content-check
+
+Claude: Brand voice: PASS — technical, specific, no marketing fluff.
+        Messaging alignment: PASS — hits "coordination" angle, not "migration."
+        Channel fit: PASS — thread length right for X, hook is specific.
+        CTA: NEEDS REVISION — "check it out" is weak.
+        → Suggested: "If you manage >10 services, try it on one.
+           5 minutes. No config. Star if it saves your Monday."
+
+        Verdict: READY TO PUBLISH (after CTA fix)
+
+You:    /forbotsake-publish
+
+Claude: [opens X via Chrome, posts the thread, logs the publish event]
+        Published: x.com/you/status/18294...
+        Logged to publish-log.md for retro tracking.
+
+You:    /forbotsake-retro  (one week later)
+
+Claude: Week 1 results:
+        - X thread: 12K impressions, 340 likes, 28 replies, 47 new stars
+        - Best performing tweet: #3 (the "Flyway breaks at 40 services" one)
+        - 4 DMs from platform engineers asking about enterprise support
+
+        Recommendation: Double down on "war story" format.
+        Drop the blog post — your audience lives on X and Slack, not blogs.
+        Week 2 pivot: turn the DM conversations into a case study thread.
+```
+
+You said "I should probably tweet about it." Nine skills later, you have positioning that competitors can't copy, content your audience actually wants, and data showing what works. That's not a tweet scheduler. That's a marketing team.
+
 ## How it works
 
 Each skill is a SKILL.md file that Claude Code reads and follows. Skills read your codebase (README, git log) to understand your product before asking questions. Outputs are markdown files in your project root.

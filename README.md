@@ -49,7 +49,7 @@ UNDERSTAND → CHALLENGE → RESEARCH → PLAN → CREATE → REVIEW → SHIP �
 | 5 | PLAN | `/forbotsake-content-plan` | Content calendar: themes, formats, cadence per channel |
 | 6 | CREATE | `/forbotsake-create` | Write actual content: X threads, posts, emails |
 | 7 | REVIEW | `/forbotsake-content-check` | Pre-publish check: brand voice, messaging, channel fit |
-| 8 | SHIP | `/forbotsake-publish` | Post to X, schedule content, set up automation |
+| 8 | SHIP | `/forbotsake-publish` | Auto-post via Chrome, schedule content, or copy-paste ready text |
 | 9 | MEASURE | `/forbotsake-retro` | Weekly retro: what worked, what to change next |
 
 ## Quick start

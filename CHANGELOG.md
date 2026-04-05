@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2 (2026-04-05)
+
+### Changed
+- Skills now auto-upgrade (or prompt to upgrade) when a newer version is detected, instead of showing a passive "run /forbotsake-upgrade" message. Mirrors gstack's inline upgrade flow with 4 options: upgrade now, always auto-upgrade, snooze, or disable checks.
+
 ## 0.1.1 (2026-04-05)
 
 ### Fixed

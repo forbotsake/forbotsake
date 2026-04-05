@@ -23,6 +23,16 @@ if [ -d "$_FB_ROOT" ]; then
 fi
 ```
 
+If output shows `UPGRADE_AVAILABLE <old> <new>`: read the forbotsake-upgrade SKILL.md
+at `$_FB_ROOT/forbotsake-upgrade/SKILL.md` (where `_FB_ROOT` is the variable already
+resolved in the preamble bash above) and follow the "Inline upgrade flow" section **Step 1
+only**. If Step 1 results in "Yes" or "Always" (proceed with upgrade), continue through
+Steps 2-7 of the inline flow. If Step 1 results in "Not now" or "Never" (declined),
+skip Steps 2-7 entirely and continue with this skill immediately.
+
+If output shows `JUST_UPGRADED <old> <new>`: tell user
+"Running forbotsake v{new} (just updated from v{old})!" and continue.
+
 ## forbotsake — Marketing Skills for Claude Code
 
 You can build the product. This helps you sell it.

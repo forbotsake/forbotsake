@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.0 (2026-04-05)
+
+### Added
+- **`/forbotsake-cron` — autonomous auto-posting via cron.** Your content posts itself. A cron job runs every 30 minutes, reads `content-calendar.md` for scheduled posts, and uses `claude -p --chrome` to post reviewed content without an active session.
+  - `bin/forbotsake-cron` bash script with Python3 calendar parser, Chrome health check, lockfile with PID+TTL, catch-up policies (`skip`/`post-late`), 5MB log rotation, and 10-minute timeout.
+  - `forbotsake-cron/SKILL.md` skill with `install`, `status`, `uninstall`, `pause`, `resume`, `doctor`, and `run-now` subcommands.
+  - Tick mode in `forbotsake-go`: file-flag detection, Stage 5 only guard, atomic claim state (`status: posting`) to prevent double-posts, stuck-posting recovery.
+  - Autonomous receipt formats in `forbotsake-publish`: AUTO, AUTO/FAILED, and MISSED entries with session ID, scheduled/posted timestamps.
+  - `scheduled_datetime` ISO 8601 column support in content-calendar.md (including `Z` UTC suffix).
+  - Project-scoped state files via md5 hash (supports multiple projects on one machine).
+  - Headless safety guard: prevents uncontrolled pipeline runs when tick flag is missing.
+- `status: posting` and `status: failed` frontmatter statuses tracked in forbotsake-go pipeline state.
+
+### Changed
+- CLAUDE.md: added Autopilot Mode section and forbotsake-cron routing rules.
+- README: added Autopilot Mode section with commands and prerequisites.
+- forbotsake-publish: `FAILED` receipt text corrected from "Will retry" to "Set back to reviewed to retry."
+
 ## 0.4.0 (2026-04-05)
 
 ### Added

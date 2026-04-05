@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 (2026-04-05)
+## 0.6.0 (2026-04-05)
 
 ### Added
 - **Multi-modal visual generation** — forbotsake now generates images, text-cards, and video alongside text content. The AI decides which posts need visuals based on channel norms and content strategy.

@@ -67,7 +67,11 @@ if (existsSync(brandPath)) {
     const raw = readFileSync(brandPath, "utf-8");
     const stripped = raw.replace(/^---[\s\S]*?---\n?/, "");
     const parsed = parseYaml(stripped);
-    brand = { ...defaultBrand, ...parsed, colors: { ...defaultBrand.colors, ...parsed?.colors } };
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const safeColors = parsed.colors && typeof parsed.colors === "object" && !Array.isArray(parsed.colors)
+        ? parsed.colors : {};
+      brand = { ...defaultBrand, ...parsed, colors: { ...defaultBrand.colors, ...safeColors } };
+    }
   } catch (e) {
     console.warn(`Warning: Could not parse ${brandPath}. Using default palette.`);
   }
@@ -127,8 +131,12 @@ function extractTakeaways(): string[] {
   return bullets.length > 0 ? bullets : [title];
 }
 
-// --- Contrast check (WCAG 2.1 AA: 4.5:1) ---
+// --- Hex validation + Contrast check (WCAG 2.1 AA: 4.5:1) ---
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+function isValidHex(hex: string): boolean { return HEX_RE.test(hex); }
+
 function luminance(hex: string): number {
+  if (!isValidHex(hex)) return 0;
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
   const b = parseInt(hex.slice(5, 7), 16) / 255;
@@ -347,8 +355,13 @@ async function render() {
   const resvg = new Resvg(svg, { fitTo: { mode: "width", value: width } });
   const png = resvg.render().asPng();
 
-  writeFileSync(outputPath, png);
-  console.log(`Saved: ${outputPath} (${width}x${height}, type: ${cardType})`);
+  const resolvedOutput = resolve(outputPath);
+  if (resolvedOutput.includes("..") || !resolvedOutput.startsWith(resolve("."))) {
+    console.error(`Error: Output path escapes project directory: ${outputPath}`);
+    process.exit(1);
+  }
+  writeFileSync(resolvedOutput, png);
+  console.log(`Saved: ${resolvedOutput} (${width}x${height}, type: ${cardType})`);
 }
 
 async function fetchFont(weight: number = 400): Promise<ArrayBuffer> {

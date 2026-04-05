@@ -40,9 +40,24 @@ echo "BRANCH: $_BRANCH"
 
 # Set orchestrated mode for sub-skills via file flag (env vars don't propagate across Skill tool invocations)
 _ORCH_FLAG="$FORBOTSAKE_HOME/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
-echo "1" > "$_ORCH_FLAG"
-echo "ORCHESTRATED: 1"
-echo "ORCH_FLAG: $_ORCH_FLAG"
+
+# Recursion guard: check if already orchestrated before overwriting
+if [ -f "$_ORCH_FLAG" ] && [ "$(cat "$_ORCH_FLAG" 2>/dev/null)" = "1" ]; then
+  echo "RECURSION_DETECTED: yes"
+  echo "ORCH_FLAG: $_ORCH_FLAG"
+else
+  # Check for stale flag (older than 2 hours = likely crashed session)
+  if [ -f "$_ORCH_FLAG" ]; then
+    _FLAG_AGE=$(( ($(date +%s) - $(stat -f %m "$_ORCH_FLAG" 2>/dev/null || echo 0)) / 3600 ))
+    if [ "${_FLAG_AGE:-0}" -gt 2 ]; then
+      echo "STALE_FLAG: yes (${_FLAG_AGE}h old, removing)"
+      rm -f "$_ORCH_FLAG"
+    fi
+  fi
+  echo "1" > "$_ORCH_FLAG"
+  echo "ORCHESTRATED: 1"
+  echo "ORCH_FLAG: $_ORCH_FLAG"
+fi
 
 # Pipeline state detection
 echo "--- PIPELINE STATE ---"
@@ -100,8 +115,8 @@ else
   echo "--- PROVIDER DETECTION ---"
   command -v bun >/dev/null 2>&1 && echo "SATORI: yes (bun)" || { command -v node >/dev/null 2>&1 && echo "SATORI: yes (node)" || echo "SATORI: no"; }
   echo "CHROME_MCP: check-at-runtime"
-  [ -n "$NANO_BANANA_API_KEY" ] && echo "NANO_BANANA: yes" || echo "NANO_BANANA: no"
-  [ -n "$SEEDANCE_API_KEY" ] && echo "SEEDANCE: yes" || echo "SEEDANCE: no"
+  [ -n "${NANO_BANANA_API_KEY:-}" ] && echo "NANO_BANANA: yes" || echo "NANO_BANANA: no"
+  [ -n "${SEEDANCE_API_KEY:-}" ] && echo "SEEDANCE: yes" || echo "SEEDANCE: no"
   echo "--- END DETECTION ---"
 fi
 
@@ -118,7 +133,9 @@ fi
 echo "--- END PIPELINE STATE ---"
 ```
 
-**Recursion guard:** If `ORCHESTRATED` is already `1` (the flag file exists before this skill created it), this skill is being invoked recursively. Say: "forbotsake-go is already running. Skipping to avoid recursion." Then stop.
+**Recursion guard:** If `RECURSION_DETECTED` is `yes`, this skill is being invoked recursively (the flag was already set by a parent forbotsake-go). Say: "forbotsake-go is already running. Skipping to avoid recursion." Then stop.
+
+**Stale flag:** If `STALE_FLAG` is `yes`, a previous run crashed without cleanup. The flag was removed. Proceed normally.
 
 If preamble shows `UPGRADE_AVAILABLE <old> <new>`: read `$_FBS_ROOT/forbotsake-upgrade/SKILL.md`
 and follow the "Inline upgrade flow" section Step 1 only. If upgrade proceeds, continue after.

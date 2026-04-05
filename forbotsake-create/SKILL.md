@@ -87,8 +87,8 @@ else
   echo "--- PROVIDER DETECTION ---"
   command -v bun >/dev/null 2>&1 && echo "SATORI_AVAILABLE: yes (bun)" || { command -v node >/dev/null 2>&1 && echo "SATORI_AVAILABLE: yes (node)" || echo "SATORI_AVAILABLE: no"; }
   echo "CHROME_MCP: check-at-runtime"
-  [ -n "$NANO_BANANA_API_KEY" ] && echo "NANO_BANANA_API: yes" || echo "NANO_BANANA_API: no"
-  [ -n "$SEEDANCE_API_KEY" ] && echo "SEEDANCE_API: yes" || echo "SEEDANCE_API: no"
+  [ -n "${NANO_BANANA_API_KEY:-}" ] && echo "NANO_BANANA_API: yes" || echo "NANO_BANANA_API: no"
+  [ -n "${SEEDANCE_API_KEY:-}" ] && echo "SEEDANCE_API: yes" || echo "SEEDANCE_API: no"
   echo "--- END DETECTION ---"
 fi
 

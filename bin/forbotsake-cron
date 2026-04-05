@@ -1,0 +1,495 @@
+#!/usr/bin/env bash
+# forbotsake-cron — lightweight pre-check that only launches Claude when there's work.
+# macOS only (uses BSD date, pgrep for Chrome Canary/Chrome).
+#
+# Usage:
+#   bin/forbotsake-cron                  # normal tick (called by cron)
+#   bin/forbotsake-cron --dry-run        # show what would post, no Claude invocation
+#   bin/forbotsake-cron --run-now        # force one tick immediately
+#   bin/forbotsake-cron --status         # show cron status
+#
+# Cron entry (written by /forbotsake-cron install):
+#   */30 * * * * /path/to/bin/forbotsake-cron /path/to/project >> ~/.forbotsake/cron.log 2>&1
+set -uo pipefail
+# Note: NOT using set -e because we need to capture claude -p exit codes
+
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+mkdir -p "$FORBOTSAKE_HOME"
+
+# --- Argument parsing ---
+MODE="tick"
+PROJECT_ROOT=""
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run)  MODE="dry-run" ;;
+    --run-now)  MODE="run-now" ;;
+    --status)   MODE="status" ;;
+    --pause)    MODE="pause" ;;
+    --resume)   MODE="resume" ;;
+    -*)         echo "Unknown flag: $arg"; exit 1 ;;
+    *)          PROJECT_ROOT="$arg" ;;
+  esac
+done
+
+# Resolve project root
+if [ -z "$PROJECT_ROOT" ]; then
+  CONFIG_FILE="$FORBOTSAKE_HOME/cron.config"
+  if [ -f "$CONFIG_FILE" ]; then
+    PROJECT_ROOT=$(grep -o 'project_root=\S*' "$CONFIG_FILE" 2>/dev/null | cut -d= -f2 || true)
+  fi
+fi
+PROJECT_ROOT="${PROJECT_ROOT:-.}"
+
+LOG_FILE="$FORBOTSAKE_HOME/cron.log"
+ERROR_LOG="$FORBOTSAKE_HOME/cron-errors.log"
+MAX_LOG_BYTES=5242880  # 5MB
+
+# --- Log rotation (keeps log under 5MB) ---
+if [ -f "$LOG_FILE" ]; then
+  LOG_SIZE=$(stat -f %z "$LOG_FILE" 2>/dev/null || wc -c < "$LOG_FILE" 2>/dev/null | tr -d ' ')
+  if [ "${LOG_SIZE:-0}" -gt "$MAX_LOG_BYTES" ]; then
+    mv "$LOG_FILE" "${LOG_FILE}.old"
+    # Keep only the .old backup, not infinite history
+    rm -f "${LOG_FILE}.old.old" 2>/dev/null
+  fi
+fi
+if [ -f "$ERROR_LOG" ]; then
+  ERR_SIZE=$(stat -f %z "$ERROR_LOG" 2>/dev/null || wc -c < "$ERROR_LOG" 2>/dev/null | tr -d ' ')
+  if [ "${ERR_SIZE:-0}" -gt "$MAX_LOG_BYTES" ]; then
+    mv "$ERROR_LOG" "${ERROR_LOG}.old"
+    rm -f "${ERROR_LOG}.old.old" 2>/dev/null
+  fi
+fi
+# Use path hash for project-scoped files to avoid basename collisions
+PROJECT_HASH=$(echo "$PROJECT_ROOT" | md5 2>/dev/null | cut -c1-8 || echo "$PROJECT_ROOT" | md5sum 2>/dev/null | cut -c1-8 || basename "$PROJECT_ROOT")
+LOCKFILE="/tmp/forbotsake-cron-${PROJECT_HASH}.lock"
+LOCKFILE_TIMEOUT_MIN=45
+LAST_RUN_FILE="$FORBOTSAKE_HOME/cron-last-run-${PROJECT_HASH}"
+PAUSE_FILE="$FORBOTSAKE_HOME/cron-paused-${PROJECT_HASH}"
+# Read claude_bin and python3 paths from config (set at install time with full PATH)
+_CONFIG_FILE="$FORBOTSAKE_HOME/cron.config"
+_CFG_CLAUDE=$(grep -o 'claude_bin=\S*' "$_CONFIG_FILE" 2>/dev/null | cut -d= -f2 || true)
+_CFG_PYTHON=$(grep -o 'python3_bin=\S*' "$_CONFIG_FILE" 2>/dev/null | cut -d= -f2 || true)
+CLAUDE_BIN="${CLAUDE_BIN:-${_CFG_CLAUDE:-$(which claude 2>/dev/null || echo claude)}}"
+PYTHON3_BIN="${_CFG_PYTHON:-$(which python3 2>/dev/null || echo python3)}"
+
+log() { echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $1" >> "$LOG_FILE"; }
+log_error() {
+  local msg="$1"
+  log "ERROR: $msg"
+  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) ERROR: $msg" >> "$ERROR_LOG"
+}
+
+# --- Calendar parser (Python3) ---
+find_due_posts() {
+  local calendar_file="$1"
+  local window_minutes="${2:-30}"
+  "$PYTHON3_BIN" -c "
+import sys, re
+from datetime import datetime, timezone, timedelta
+
+calendar_file = sys.argv[1]
+window_min = int(sys.argv[2])
+
+try:
+    with open(calendar_file) as f:
+        content = f.read()
+except FileNotFoundError:
+    sys.exit(0)
+
+now = datetime.now(timezone.utc)
+window = timedelta(minutes=window_min)
+
+# Parse markdown table rows with scheduled_datetime column
+for line in content.split('\n'):
+    line = line.strip()
+    if not line.startswith('|') or '---' in line:
+        continue
+    cells = [c.strip() for c in line.split('|')[1:-1]]
+    # Find scheduled_datetime column by header or position (last column)
+    for cell in cells:
+        # Match ISO 8601 with timezone offset or Z suffix
+        m = re.match(r'(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2}))', cell)
+        if m:
+            try:
+                raw = m.group(1)
+                if raw.endswith('Z'):
+                    raw = raw[:-1] + '+00:00'
+                dt = datetime.fromisoformat(raw)
+                dt_utc = dt.astimezone(timezone.utc)
+                # Only match posts that are due (past or at most 2 min into future for clock drift)
+                delta_sec = (now - dt_utc).total_seconds()
+                if -120 <= delta_sec <= window_min * 60:
+                    # Find the file column (looks like content/*.md)
+                    for c in cells:
+                        c = c.strip()
+                        if c.startswith('content/') and c.endswith('.md'):
+                            import os
+                            safe = os.path.normpath(c)
+                            if safe.startswith('content/') and '..' not in safe:
+                                print(safe)
+                            break
+            except ValueError:
+                continue
+" "$calendar_file" "$window_minutes" 2>/dev/null
+}
+
+# --- Chrome detection ---
+check_chrome() {
+  # Check for Chrome or Chrome Canary
+  if pgrep -x "Google Chrome" > /dev/null 2>&1; then
+    return 0
+  elif pgrep -f "Google Chrome Canary" > /dev/null 2>&1; then
+    return 0
+  fi
+  return 1
+}
+
+# --- Lockfile with PID + TTL ---
+check_lockfile() {
+  if [ ! -f "$LOCKFILE" ]; then
+    return 0  # no lock, proceed
+  fi
+  local lock_pid
+  lock_pid=$(cat "$LOCKFILE" 2>/dev/null | head -1)
+  # Check if PID is still alive
+  if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
+    return 1  # lock held by live process
+  fi
+  # PID is dead, check age as backup
+  local lock_age
+  lock_age=$(( ($(date +%s) - $(stat -f %m "$LOCKFILE" 2>/dev/null || echo 0)) / 60 ))
+  if [ "$lock_age" -gt "$LOCKFILE_TIMEOUT_MIN" ]; then
+    log "WARN: Stale lockfile (PID $lock_pid dead, ${lock_age}min old), removing"
+    rm -f "$LOCKFILE"
+    return 0
+  fi
+  # Recent lock with dead PID, remove
+  log "WARN: Lockfile PID $lock_pid is dead, removing"
+  rm -f "$LOCKFILE"
+  return 0
+}
+
+acquire_lock() {
+  # Atomic lock acquisition using noclobber
+  if ! ( set -C; echo "$$" > "$LOCKFILE" ) 2>/dev/null; then
+    log "INFO: Lock acquisition failed (race), skipping"
+    exit 0
+  fi
+  trap 'rm -f "$LOCKFILE" "$TICK_FLAG" 2>/dev/null' EXIT
+}
+
+# --- Catch-up detection ---
+detect_catchup() {
+  local config_file="$FORBOTSAKE_HOME/cron.config"
+  local policy
+  policy=$(grep -o 'catch_up_policy=\S*' "$config_file" 2>/dev/null | cut -d= -f2 || echo "skip")
+
+  if [ ! -f "$LAST_RUN_FILE" ]; then
+    return 0  # first run, no catch-up needed
+  fi
+
+  local last_run
+  last_run=$(cat "$LAST_RUN_FILE")
+  local last_epoch
+  last_epoch=$(date -jf "%Y-%m-%dT%H:%M:%SZ" "$last_run" +%s 2>/dev/null || echo 0)
+  local now_epoch
+  now_epoch=$(date +%s)
+  # Guard against corrupted LAST_RUN_FILE (epoch=0 means parse failed)
+  if [ "$last_epoch" -eq 0 ] || [ "$last_epoch" -gt "$now_epoch" ]; then
+    log "WARN: Invalid LAST_RUN_FILE content ('$last_run'), resetting to now"
+    date -u +%Y-%m-%dT%H:%M:%SZ > "$LAST_RUN_FILE"
+    echo "30"
+    return 0
+  fi
+  local gap_min=$(( (now_epoch - last_epoch) / 60 ))
+
+  if [ "$gap_min" -gt 60 ]; then
+    log "INFO: Gap detected (${gap_min}min since last run), policy: $policy"
+    if [ "$policy" = "skip" ]; then
+      log "INFO: Skipping missed posts per catch-up policy"
+      # Write MISSED receipts to published-log.md for audit trail
+      local project_root_for_missed
+      project_root_for_missed=$(grep -o 'project_root=\S*' "$config_file" 2>/dev/null | cut -d= -f2 || echo ".")
+      local missed_log="$project_root_for_missed/published-log.md"
+      if [ -f "$missed_log" ] || [ -d "$project_root_for_missed/content" ]; then
+        local missed_posts
+        missed_posts=$(find_due_posts "$project_root_for_missed/content-calendar.md" "$gap_min" 2>/dev/null)
+        if [ -n "$missed_posts" ]; then
+          echo "$missed_posts" | while read -r missed_file; do
+            cat >> "$missed_log" << MISSED_EOF
+
+## $(date +%Y-%m-%d) - (MISSED)
+
+- **Source file:** $missed_file
+- **Scheduled:** within last ${gap_min} minutes
+- **Result:** missed
+- **Reason:** Laptop was asleep, catch-up policy: skip
+- **Notes:** Content remains \`reviewed\`. Manually post or reschedule.
+
+---
+MISSED_EOF
+          done
+          log "INFO: Wrote $(echo "$missed_posts" | wc -l | tr -d ' ') MISSED receipts to published-log.md"
+        fi
+      fi
+      date -u +%Y-%m-%dT%H:%M:%SZ > "$LAST_RUN_FILE"
+      return 1  # signal to skip
+    fi
+    # post-late: expand the query window to cover all missed time
+    # Update LAST_RUN_FILE now so the window doesn't grow unbounded across ticks
+    date -u +%Y-%m-%dT%H:%M:%SZ > "$LAST_RUN_FILE"
+    echo "$gap_min"
+    return 0
+  fi
+  echo "30"  # normal window
+  return 0
+}
+
+# --- Status command ---
+show_status() {
+  echo "FORBOTSAKE CRON STATUS"
+  echo ""
+  if [ -f "$PAUSE_FILE" ]; then
+    echo "  State:      PAUSED"
+  elif crontab -l 2>/dev/null | grep -q "forbotsake-cron"; then
+    echo "  State:      ACTIVE"
+  else
+    echo "  State:      NOT INSTALLED"
+  fi
+  echo ""
+  if [ -f "$LAST_RUN_FILE" ]; then
+    echo "  Last run:   $(cat "$LAST_RUN_FILE")"
+  else
+    echo "  Last run:   never"
+  fi
+  echo ""
+  # Show next due posts
+  if [ -f "$PROJECT_ROOT/content-calendar.md" ]; then
+    echo "  Upcoming:"
+    "$PYTHON3_BIN" -c "
+import sys, re
+from datetime import datetime, timezone
+
+try:
+    with open(sys.argv[1]) as f:
+        content = f.read()
+except FileNotFoundError:
+    print('    No calendar found')
+    sys.exit(0)
+
+now = datetime.now(timezone.utc)
+upcoming = []
+for line in content.split('\n'):
+    line = line.strip()
+    if not line.startswith('|') or '---' in line:
+        continue
+    cells = [c.strip() for c in line.split('|')[1:-1]]
+    for cell in cells:
+        m = re.match(r'(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2}))', cell)
+        if m:
+            try:
+                raw = m.group(1)
+                if raw.endswith('Z'):
+                    raw = raw[:-1] + '+00:00'
+                dt = datetime.fromisoformat(raw)
+                if dt.astimezone(timezone.utc) > now:
+                    file_col = next((c.strip() for c in cells if c.strip().startswith('content/') and c.strip().endswith('.md')), '?')
+                    channel = cells[1].strip() if len(cells) > 1 else '?'
+                    upcoming.append((dt, file_col, channel))
+            except ValueError:
+                pass
+upcoming.sort()
+for dt, f, ch in upcoming[:5]:
+    print(f'    {dt.strftime(\"%Y-%m-%d %H:%M %Z\")} -> {ch} ({f})')
+if not upcoming:
+    print('    No upcoming scheduled posts')
+" "$PROJECT_ROOT/content-calendar.md" 2>/dev/null || echo "    Calendar parse error"
+  fi
+  echo ""
+  # Chrome check
+  if check_chrome; then
+    echo "  Chrome:     running"
+  else
+    echo "  Chrome:     NOT RUNNING"
+  fi
+  echo ""
+  # Recent errors
+  if [ -f "$ERROR_LOG" ]; then
+    local error_count
+    error_count=$(wc -l < "$ERROR_LOG" 2>/dev/null | tr -d ' ')
+    echo "  Errors:     $error_count total (last 3):"
+    tail -3 "$ERROR_LOG" 2>/dev/null | sed 's/^/    /'
+  else
+    echo "  Errors:     0"
+  fi
+  echo ""
+  local config_file="$FORBOTSAKE_HOME/cron.config"
+  local policy
+  policy=$(grep -o 'catch_up_policy=\S*' "$config_file" 2>/dev/null | cut -d= -f2 || echo "skip")
+  echo "  Catch-up:   $policy"
+}
+
+# =================================================================
+# MAIN
+# =================================================================
+
+case "$MODE" in
+  pause)
+    touch "$PAUSE_FILE"
+    echo "Autopilot paused."
+    exit 0
+    ;;
+
+  resume)
+    rm -f "$PAUSE_FILE"
+    echo "Autopilot resumed."
+    exit 0
+    ;;
+
+  status)
+    show_status
+    exit 0
+    ;;
+
+  dry-run)
+    echo "DRY RUN — forbotsake-cron"
+    echo ""
+    if [ -f "$PROJECT_ROOT/content-calendar.md" ]; then
+      DUE=$(find_due_posts "$PROJECT_ROOT/content-calendar.md" 10080)  # 7 days
+      if [ -n "$DUE" ]; then
+        echo "Scheduled posts (next 7 days):"
+        echo "$DUE" | while read -r file; do
+          echo "  $file"
+        done
+      else
+        echo "No scheduled posts found in content-calendar.md"
+      fi
+    else
+      echo "No content-calendar.md found at $PROJECT_ROOT"
+    fi
+    echo ""
+    if check_chrome; then
+      echo "Chrome:     running"
+    else
+      echo "Chrome:     NOT RUNNING (required for auto-posting)"
+    fi
+    echo ""
+    if crontab -l 2>/dev/null | grep -q "forbotsake-cron"; then
+      echo "Cron:       installed"
+    else
+      echo "Cron:       not installed (run /forbotsake-cron install)"
+    fi
+    exit 0
+    ;;
+
+  run-now|tick)
+    # --- Pre-checks (no tokens spent) ---
+
+    # 0. Pause check (--run-now bypasses pause — it's an explicit manual action)
+    if [ -f "$PAUSE_FILE" ] && [ "$MODE" = "tick" ]; then
+      exit 0
+    fi
+
+    # 1. Calendar check
+    CALENDAR="$PROJECT_ROOT/content-calendar.md"
+    if [ ! -f "$CALENDAR" ]; then
+      [ "$MODE" = "run-now" ] && echo "No content-calendar.md found"
+      exit 0
+    fi
+
+    # Detect catch-up and get query window
+    WINDOW=30
+    if CATCHUP_RESULT=$(detect_catchup); then
+      WINDOW="${CATCHUP_RESULT:-30}"
+    else
+      exit 0  # skip policy, already handled
+    fi
+
+    DUE_POSTS=$(find_due_posts "$CALENDAR" "$WINDOW")
+    if [ -z "$DUE_POSTS" ]; then
+      [ "$MODE" = "run-now" ] && echo "No posts due right now"
+      exit 0
+    fi
+
+    # 2. Chrome check
+    if ! check_chrome; then
+      log_error "Chrome not running, cannot auto-post"
+      [ "$MODE" = "run-now" ] && echo "ERROR: Chrome not running"
+      # Send macOS notification
+      osascript -e 'display notification "Chrome not running. Auto-posting skipped." with title "forbotsake"' 2>/dev/null || true
+      exit 1
+    fi
+
+    # 3. Lockfile check
+    if ! check_lockfile; then
+      log "INFO: Another cron run in progress, skipping"
+      [ "$MODE" = "run-now" ] && echo "Another run in progress"
+      exit 0
+    fi
+
+    # --- Launch Claude (tokens spent from here) ---
+
+    # Pick first due post (one per tick to avoid rate-limiting)
+    FIRST_DUE=$(echo "$DUE_POSTS" | head -1)
+    REMAINING=$(echo "$DUE_POSTS" | tail -n +2)
+    log "INFO: Posting $FIRST_DUE"
+    [ "$MODE" = "run-now" ] && echo "Posting: $FIRST_DUE"
+
+    # Log deferred posts so they aren't silently lost between ticks
+    if [ -n "$REMAINING" ]; then
+      REMAINING_COUNT=$(echo "$REMAINING" | wc -l | tr -d ' ')
+      log "INFO: $REMAINING_COUNT more posts due, will process on subsequent ticks"
+      [ "$MODE" = "run-now" ] && echo "  ($REMAINING_COUNT more due, will post on next ticks)"
+    fi
+
+    # Set TICK_FLAG path before acquire_lock so the EXIT trap can clean it up
+    TICK_FLAG="$FORBOTSAKE_HOME/tick-${PROJECT_HASH}"
+
+    acquire_lock
+    # EXIT trap now covers both LOCKFILE and TICK_FLAG
+
+    # Write tick flag (file-based, not env var)
+    echo "$FIRST_DUE" > "$TICK_FLAG"
+
+    cd "$PROJECT_ROOT" || {
+      log_error "Project directory not found: $PROJECT_ROOT"
+      exit 1
+    }
+    # Timeout: kill Claude if it hangs longer than 10 minutes (prevents lock deadlock)
+    # macOS doesn't have `timeout`, use background + wait + kill pattern
+    "$CLAUDE_BIN" -p \
+      "Run /forbotsake-go in tick mode. The tick flag is at $TICK_FLAG. Post ONLY the content file specified in that flag. Do not run any other pipeline stages. After posting, update the content file status and write a receipt to published-log.md." \
+      --chrome \
+      --allowedTools "Bash,Read,Write,Edit,Grep,Glob,Skill,mcp__claude-in-chrome__tabs_context_mcp,mcp__claude-in-chrome__tabs_create_mcp,mcp__claude-in-chrome__navigate,mcp__claude-in-chrome__read_page,mcp__claude-in-chrome__get_page_text,mcp__claude-in-chrome__find,mcp__claude-in-chrome__computer" \
+      >> "$LOG_FILE" 2>&1 &
+    CLAUDE_PID=$!
+    # Wait up to 10 minutes, then kill
+    WAITED=0
+    while kill -0 "$CLAUDE_PID" 2>/dev/null && [ "$WAITED" -lt 600 ]; do
+      sleep 5
+      WAITED=$((WAITED + 5))
+    done
+    if kill -0 "$CLAUDE_PID" 2>/dev/null; then
+      log_error "claude -p timed out after 10 minutes for $FIRST_DUE, killing"
+      kill "$CLAUDE_PID" 2>/dev/null
+      wait "$CLAUDE_PID" 2>/dev/null
+      CLAUDE_EXIT=124  # timeout exit code convention
+    else
+      wait "$CLAUDE_PID"
+      CLAUDE_EXIT=$?
+    fi
+
+    # Clean up tick flag
+    rm -f "$TICK_FLAG"
+
+    if [ "$CLAUDE_EXIT" -ne 0 ]; then
+      log_error "claude -p exited with code $CLAUDE_EXIT for $FIRST_DUE"
+      osascript -e 'display notification "Auto-posting failed. Check ~/.forbotsake/cron.log" with title "forbotsake"' 2>/dev/null || true
+    else
+      log "INFO: Successfully posted $FIRST_DUE"
+      # Only update last-run on success (not before, so catch-up works on failure)
+      date -u +%Y-%m-%dT%H:%M:%SZ > "$LAST_RUN_FILE"
+    fi
+    ;;
+esac

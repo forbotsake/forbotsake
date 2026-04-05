@@ -320,7 +320,74 @@ Character count: {count}/3000
 
 Use AskUserQuestion to understand the platform's constraints (character limits, format, audience norms), then format accordingly.
 
-## Phase 3: Quality Check
+## Phase 3: Publish Kill Switch + Quality Check
+
+**Skip the kill switch (3a) if `FORBOTSAKE_FAST` env var is `1`.** Print: "FORBOTSAKE_FAST=1: skipping publish kill switch." Jump to 3b.
+
+This is the last gate before content goes public. Not a deep review (that happened
+in /forbotsake-content-check). This is a final sanity check: "would I be embarrassed?"
+
+### Phase 3a: Kill Switch (Adversarial)
+
+Read the banned patterns files:
+
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-marketing-start/SKILL.md" -type f 2>/dev/null | head -1)" 2>/dev/null)
+_FBS_ROOT=$(cd "${_SKILL_DIR}/.." 2>/dev/null && pwd || true)
+[ -n "$_FBS_ROOT" ] && [ -f "$_FBS_ROOT/knowledge/banned-patterns-defaults.md" ] && echo "DEFAULTS: found" || echo "DEFAULTS: not_found"
+[ -f "$FORBOTSAKE_HOME/banned-patterns.md" ] && echo "USER_PATTERNS: found" || echo "USER_PATTERNS: none"
+```
+
+Read the banned patterns file(s). Then scan the formatted content for:
+
+1. **Embarrassment test:** Read the final formatted content as if you're the ICP seeing it
+   for the first time. Would you show this to your smartest friend? Any sentence that
+   makes you cringe?
+
+2. **Factual claims:** Any claims that could be verifiably wrong? Specific numbers,
+   statistics, or comparisons that the founder hasn't verified?
+
+3. **AI tell scan:** Check for patterns from the banned patterns files. Count matches.
+   Each pattern match adds to a score. This is a contributing signal, not an automatic
+   fail. 3+ pattern matches across the piece = HOLD.
+
+4. **Platform fit:** Does the formatted version look right for the platform?
+   Character limits respected? Thread structure correct? Links formatted correctly?
+
+**Scoring:** Each dimension contributes to a GO/HOLD verdict.
+- Any factual claim issue = HOLD
+- Embarrassment test fails = HOLD
+- 3+ banned pattern matches = HOLD
+- Platform fit issues = fix inline, don't HOLD
+
+**If GO:** Print "Publish Kill Switch: GO. Content cleared for publishing." Continue to Phase 3b.
+
+**If HOLD:** This ALWAYS requires explicit user confirmation, even in orchestrated mode.
+
+> "**Publish Kill Switch: HOLD**
+>
+> Last-gate check before this goes public:
+> {for each issue:}
+> - **{dimension}:** {specific concern}
+>
+> This content has not been published yet. Your call."
+
+Use AskUserQuestion:
+A) Publish anyway (I've reviewed the concerns)
+B) Go back and fix it
+
+If A: log override to metrics, continue.
+If B: stop the publish flow. User returns to /forbotsake-content-check or manual editing.
+
+Log result:
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+mkdir -p "$FORBOTSAKE_HOME"
+echo '{"gate":"publish","ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","result":"RESULT","content_file":"FILENAME","override":BOOL}' >> "$FORBOTSAKE_HOME/review-metrics.jsonl" 2>/dev/null || true
+```
+
+### Phase 3b: Quality Check (Structural)
 
 Before delivering the formatted content, verify:
 
@@ -500,6 +567,51 @@ Append to `published-log.md` in the project root. Create the file if it doesn't 
 - **Link:** {captured URL}
 - **Visual:** {visual_treatment} via {visual_provider} — {path to visual file or "none"}
 - **Notes:** {any relevant context}
+
+---
+```
+
+### Autonomous POST entry (cron/tick mode):
+```markdown
+## {date} - {platform} (AUTO)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Format:** {thread/blog/email/linkedin/other}
+- **Mode:** POST (autonomous/cron)
+- **Link:** {captured URL}
+- **Scheduled:** {ISO 8601 from content-calendar.md}
+- **Posted:** {ISO 8601 actual post time}
+- **Result:** success
+- **Notes:** Auto-posted by forbotsake-cron
+
+---
+```
+
+### Autonomous FAILED entry (cron/tick mode):
+```markdown
+## {date} - {platform} (AUTO/FAILED)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Mode:** POST (autonomous/cron)
+- **Result:** failed
+- **Failure reason:** {specific error}
+- **Notes:** Content status set to `failed`. Set back to `reviewed` to retry.
+
+---
+```
+
+### MISSED entry (catch-up skip policy):
+```markdown
+## {date} - {platform} (MISSED)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Scheduled:** {ISO 8601 from content-calendar.md}
+- **Result:** missed
+- **Reason:** Laptop was asleep, catch-up policy: skip
+- **Notes:** Content remains `reviewed`. Manually post or reschedule.
 
 ---
 ```

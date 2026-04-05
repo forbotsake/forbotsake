@@ -166,6 +166,21 @@ If `brand.md` exists, read it and extract:
 - Prompt prefix for image generation
 - If brand.md is missing, visual generation still works but uses neutral defaults
 
+### Reviewer Notes Check
+
+Check if there are previous reviewer notes from a HARD_FAIL or SOFT_FAIL in
+/forbotsake-content-check. If the user is re-creating content after a failed review,
+the content file may have `reviewer_notes:` in its frontmatter.
+
+If the user specified a content file to rewrite, read its frontmatter. If `reviewer_notes:`
+exists, extract the findings and use them as constraints for this creation session:
+
+> "I found reviewer notes from a previous review. I'll avoid these issues:
+> {for each reviewer note: dimension and fix suggestion}"
+
+Incorporate these constraints into the content generation. Do not repeat the patterns
+the reviewer flagged.
+
 If `content-calendar.md` exists, read it and extract:
 - Current week's theme and messaging pillar focus
 - Specific content slots that haven't been created yet

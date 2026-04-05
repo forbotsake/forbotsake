@@ -15,6 +15,7 @@ allowed-tools:
   - Edit
   - Grep
   - Glob
+  - Agent
   - AskUserQuestion
   - WebSearch
 ---
@@ -395,6 +396,75 @@ After writing strategy.md, read it back and check:
 3. Are the channel scores justified with real reasoning?
 
 If any check fails, tell the user what's weak and offer to revise.
+
+## Phase 4.5: Strategy Reviewer (Adversarial Gate)
+
+**Skip this phase if `FORBOTSAKE_FAST` env var is `1`.** Print: "FORBOTSAKE_FAST=1: skipping adversarial strategy review."
+
+After the self-test passes, an independent reviewer evaluates the strategy with fresh
+context. This catches vague positioning, generic ICPs, and unjustified channel scores
+that the self-test (same model reviewing its own work) might miss.
+
+### Step 1: Dispatch the reviewer
+
+Use the Agent tool to spawn an independent reviewer subagent. The subagent sees ONLY
+strategy.md, not the conversation that produced it.
+
+**Subagent prompt:**
+
+> You are a strategy reviewer for a marketing strategy document. Your job is to find
+> weaknesses that would cause downstream content to fail.
+>
+> Read the file at {strategy.md path}.
+>
+> Review on 5 dimensions:
+> 1. POSITIONING SPECIFICITY: Would the ICP forward the positioning statement to a colleague? Or is it vague enough to describe any product in this space?
+> 2. ICP CONCRETENESS: Is this a real person with a name, role, and specific pain? Or a marketing category like "SMBs in healthcare"?
+> 3. CHANNEL JUSTIFICATION: Are channel scores backed by reasoning (why THIS channel for THIS audience), or just vibes?
+> 4. FIRST MOVE EXECUTABILITY: Can someone start this action in 60 minutes? Or is it vague like "write a blog post"?
+> 5. COMPETITIVE AWARENESS: Does the positioning acknowledge what alternatives exist and why this is different? Or does it pretend the market is empty?
+>
+> For dimensions where the strategy.md lacks the relevant field, skip that dimension
+> and note "field not present" instead of failing.
+>
+> Respond with ONLY valid JSON, no markdown fences:
+> {"result": "PASS" | "NEEDS_REVISION", "findings": [{"dimension": "...", "verdict": "PASS" | "FAIL", "issue": "what's wrong", "fix": "specific suggestion"}], "summary": "one-line assessment"}
+
+### Step 2: Parse and act
+
+If JSON parsing fails: treat as PASS with visible warning:
+
+> "**Strategy Reviewer: UNAVAILABLE** (returned unparseable output). Proceeding with self-test results only. The strategy was NOT independently reviewed."
+
+Log to metrics: `{"gate":"strategy","result":"PARSE_FAIL"}`. Continue to Phase 5.
+
+**PASS:** Print "Strategy Reviewer: PASS. Strategy is specific enough to produce good content." Continue to Phase 5.
+
+**NEEDS_REVISION:** Present findings:
+
+> "**Strategy Reviewer: NEEDS_REVISION**
+>
+> An independent reviewer found weaknesses that would affect downstream content:
+> {for each finding with verdict FAIL:}
+> - **{dimension}:** {issue}. Fix: {fix}
+>
+> This is iteration {N} of 2."
+
+- **Interactive mode:** Use AskUserQuestion:
+  A) Apply fixes and re-review
+  B) I'll revise manually
+  C) Override, strategy is fine as-is
+- **Orchestrated mode:** Auto-apply one round of fixes, re-dispatch. After 2 iterations, proceed with concerns logged in strategy.md frontmatter.
+
+If override: add `review_status: override` to strategy.md frontmatter.
+
+### Step 3: Log metrics
+
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+mkdir -p "$FORBOTSAKE_HOME"
+echo '{"gate":"strategy","ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","result":"RESULT","iterations":N,"override":BOOL}' >> "$FORBOTSAKE_HOME/review-metrics.jsonl" 2>/dev/null || true
+```
 
 ## Phase 5: Next Steps
 

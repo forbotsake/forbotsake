@@ -37,7 +37,7 @@ bash ~/.claude/skills/forbotsake/bin/sync-links.sh --check
 forbotsake skills follow a sequence. Start at the top, work down.
 
 ```
-UNDERSTAND → CHALLENGE → RESEARCH → PLAN → SHARPEN → CREATE → REVIEW → SHIP → MEASURE
+UNDERSTAND → CHALLENGE → RESEARCH → PLAN → SHARPEN → CREATE → RED TEAM → REVIEW → KILL SWITCH → SHIP → MEASURE
 ```
 
 | # | Stage | Command | What it does |
@@ -191,6 +191,35 @@ Claude: Week 1 results:
 
 You said "I should probably tweet about it." Nine skills later, you have positioning that competitors can't copy, content your audience actually wants, and data showing what works. That's not a tweet scheduler. That's a marketing team.
 
+## Autopilot Mode
+
+Make your content post itself. No active session needed.
+
+```bash
+# In Claude Code:
+/forbotsake-cron install
+```
+
+A cron job runs every 30 minutes. It reads your `content-calendar.md`, checks if any reviewed content is due, and posts it via Chrome automatically. Your laptop must be awake with Chrome running.
+
+**Prerequisites:**
+- Reviewed content (run the pipeline first)
+- `content-calendar.md` with `scheduled_datetime` column (ISO 8601, e.g., `2026-04-07T10:00:00-07:00`)
+- Chrome open with Claude for Chrome extension
+
+**Commands:**
+```
+/forbotsake-cron install    # enable autopilot
+/forbotsake-cron status     # see what's scheduled, what posted
+/forbotsake-cron pause      # temporarily stop
+/forbotsake-cron resume     # start again
+/forbotsake-cron doctor     # diagnose issues
+/forbotsake-cron run-now    # force one post immediately
+/forbotsake-cron uninstall  # disable autopilot
+```
+
+**How it works:** `bin/forbotsake-cron` checks the calendar every 30 min (no Claude tokens spent when nothing is due). When a post is due, it launches `claude -p --chrome` which connects to your Chrome browser and posts via the same UI you'd use manually. Reviewed content only. Draft content is never posted.
+
 ## How it works
 
 Each skill is a SKILL.md file that Claude Code reads and follows. Skills read your codebase (README, git log) to understand your product before asking questions. Outputs are markdown files in your project root.
@@ -224,6 +253,24 @@ forbotsake generates images and video alongside text content. The AI decides whi
 | seedance-api | Video | Per-use | API key |
 
 No provider configured? No problem. forbotsake saves the visual prompt in your content file's frontmatter for manual generation later.
+
+## Quality Gates (Adversarial Review)
+
+forbotsake doesn't trust its own output. Three adversarial review gates catch bad content before it goes public:
+
+| Gate | Where | What it catches | Verdict |
+|------|-------|----------------|---------|
+| Strategy Reviewer | `/forbotsake-marketing-start` | Vague positioning, generic ICPs, unjustified channel scores | PASS / NEEDS_REVISION |
+| Content Red Team | `/forbotsake-content-check` | AI-slop patterns, wrong voice, weak originality | PASS / SOFT_FAIL / HARD_FAIL |
+| Publish Kill Switch | `/forbotsake-publish` | Embarrassment risk, factual claims, banned patterns | GO / HOLD |
+
+Gates 1 and 2 use independent reviewer subagents with fresh context that can't see the conversation that produced the content. Gate 3 is a lightweight inline check (not a subagent) for final sanity before publishing.
+
+**Fast mode:** Set `FORBOTSAKE_FAST=1` to skip gates during rapid iteration.
+
+**Custom patterns:** Add banned patterns to `~/.forbotsake/banned-patterns.md`. Defaults ship with forbotsake and are upgrade-safe.
+
+**Metrics:** Gate results log to `~/.forbotsake/review-metrics.jsonl` for `/forbotsake-retro`.
 
 ## Methodology
 

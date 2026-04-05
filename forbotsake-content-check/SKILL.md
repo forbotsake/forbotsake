@@ -16,6 +16,7 @@ allowed-tools:
   - Edit
   - Grep
   - Glob
+  - Agent
   - AskUserQuestion
 ---
 
@@ -43,6 +44,13 @@ echo "BRANCH: $_BRANCH"
 _ORCH_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
 FORBOTSAKE_ORCHESTRATED=$(cat "$_ORCH_FILE" 2>/dev/null || echo 0)
 echo "ORCHESTRATED: $FORBOTSAKE_ORCHESTRATED"
+
+# Fast mode (skip adversarial gates)
+# Read from env var OR file flag (file flag set by forbotsake-go for pipeline propagation)
+_FAST_FLAG="$FORBOTSAKE_HOME/fast-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+FORBOTSAKE_FAST="${FORBOTSAKE_FAST:-0}"
+[ "$FORBOTSAKE_FAST" = "0" ] && [ -f "$_FAST_FLAG" ] && FORBOTSAKE_FAST=$(cat "$_FAST_FLAG" 2>/dev/null || echo 0)
+echo "FAST_MODE: $FORBOTSAKE_FAST"
 
 # Check for strategy.md
 if [ -f strategy.md ]; then
@@ -137,6 +145,133 @@ Read `strategy.md` completely. Extract:
    - Business ICP = outcome-focused, professional but not corporate
    - Creative ICP = conversational, personality-driven
    - Developer ICP = show-don't-tell, code examples over claims
+
+## Phase 2.5: Content Red Team (Adversarial Review)
+
+**Skip this phase if `FAST_MODE` is `1`.** Print: "FORBOTSAKE_FAST=1: skipping adversarial review."
+
+This is an independent adversarial review of the content by a fresh-context subagent.
+The reviewer has NOT seen your conversation or the scorecard dimensions. It sees only
+the content draft, strategy.md, and the banned patterns list.
+
+### Step 1: Load banned patterns
+
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-marketing-start/SKILL.md" -type f 2>/dev/null | head -1)" 2>/dev/null)
+_FBS_ROOT=$(cd "${_SKILL_DIR}/.." 2>/dev/null && pwd || true)
+
+# Load default patterns
+_DEFAULTS=""
+[ -n "$_FBS_ROOT" ] && [ -f "$_FBS_ROOT/knowledge/banned-patterns-defaults.md" ] && _DEFAULTS="$_FBS_ROOT/knowledge/banned-patterns-defaults.md"
+echo "BANNED_DEFAULTS: ${_DEFAULTS:-not_found}"
+
+# Load user patterns
+_USER_PATTERNS="$FORBOTSAKE_HOME/banned-patterns.md"
+[ -f "$_USER_PATTERNS" ] && echo "USER_PATTERNS: $_USER_PATTERNS" || echo "USER_PATTERNS: none"
+```
+
+### Step 2: Dispatch the reviewer
+
+Use the Agent tool to spawn an independent reviewer subagent. The subagent prompt
+must contain ONLY:
+- The content file path to review
+- The strategy.md file path (for alignment checking)
+- The banned patterns file path(s)
+- The 6 review dimensions
+- The JSON output contract
+
+**Subagent prompt:**
+
+> You are a content red team reviewer. Your job is to REJECT bad content, not approve good content.
+>
+> Read these files:
+> 1. {content file path} -- the content to review
+> 2. {strategy.md path} -- the strategy it should align with
+> 3. {banned patterns path(s)} -- patterns that signal AI-generated content
+>
+> Review the content on 6 dimensions:
+> 1. AI-SLOP DETECTION: Check for patterns from the banned patterns file. Count matches.
+> 2. VOICE AUTHENTICITY: Does this sound like a human wrote it, or like an AI? Check against brand voice in strategy.md.
+> 3. ICP SPECIFICITY: Would the target person from strategy.md actually engage with this, or scroll past?
+> 4. ORIGINALITY: Does this say something the ICP hasn't heard before, or is it generic advice anyone could write?
+> 5. STRATEGY ALIGNMENT: Does the content execute the positioning and messaging pillars from strategy.md?
+> 6. PUBLIC REPUTATION RISK: Would the founder be embarrassed if this went viral for the wrong reasons?
+>
+> Respond with ONLY valid JSON, no markdown fences, no explanation outside the JSON:
+> {"result": "PASS" | "SOFT_FAIL" | "HARD_FAIL", "findings": [{"dimension": "...", "verdict": "PASS" | "FAIL", "spans": ["quoted text from content"], "fix": "suggested replacement"}], "summary": "one-line overall assessment"}
+
+### Step 3: Parse and act on the result
+
+**Parse the subagent's response as JSON.**
+
+**Before parsing:** Strip markdown fences if present (remove leading ```json and trailing ``` lines). Then attempt JSON parse.
+
+If JSON parsing still fails after stripping fences:
+- Treat as PASS with warning: "Adversarial reviewer returned unparseable output. Proceeding to scorecard review (Phase 3 still checks quality)."
+- Log to metrics: `{"gate":"content","result":"PARSE_FAIL"}`
+- Continue to Phase 3 (the existing scorecard still runs as a backstop).
+
+If parsed successfully, act on the result:
+
+**PASS:** Print "Content Red Team: PASS. Proceeding to scorecard review." Continue to Phase 3.
+
+**SOFT_FAIL:** Present the findings to the user:
+
+> "**Content Red Team: SOFT_FAIL**
+>
+> An independent reviewer flagged these issues:
+> {for each finding with verdict FAIL:}
+> - **{dimension}:** "{spans}" ... suggested fix: "{fix}"
+>
+> This is iteration {N} of 2."
+
+- **Interactive mode:** Use AskUserQuestion:
+  A) Apply fixes and re-review
+  B) Override and proceed to scorecard
+  C) I'll revise manually
+
+- **Orchestrated mode:** Auto-apply fixes, re-dispatch reviewer. Max 2 iterations total (hard counter). After 2 iterations, if still SOFT_FAIL, proceed to Phase 3 with concerns logged.
+
+If the user chooses A: apply fixes using Edit tool, re-dispatch the reviewer (Step 2). Max 2 total iterations. After 2, proceed to Phase 3 regardless.
+
+If the user chooses B: update content frontmatter with `reviewer_notes:` containing the findings. Log override. Continue to Phase 3.
+
+**HARD_FAIL:** The content needs a fundamental rewrite.
+
+> "**Content Red Team: HARD_FAIL**
+>
+> The independent reviewer says this content needs a fundamental rewrite:
+> {summary}
+>
+> Specific issues:
+> {for each finding with verdict FAIL:}
+> - **{dimension}:** "{spans}"
+>
+> **Next action:** Run `/forbotsake-create` again. The reviewer's notes will be available
+> as context to avoid the same issues."
+
+- Update content frontmatter: add `status: hard-failed` and `reviewer_notes: {JSON findings}`
+- **Interactive mode:** Use AskUserQuestion:
+  A) I'll rewrite with /forbotsake-create
+  B) Override and proceed anyway (I disagree with the reviewer)
+- **Orchestrated mode:** Write `status: hard-failed` to frontmatter. Present user with explicit proceed/abort choice (this is the one gate that always requires user input, even in orchestrated mode).
+
+If override: set `status: reviewed-override`, log override reason, continue to Phase 3.
+
+### Step 4: Log metrics
+
+After the red team phase completes, log the result:
+
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+mkdir -p "$FORBOTSAKE_HOME"
+echo '{"gate":"content","ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","result":"RESULT","content_file":"FILENAME","iterations":N,"override":BOOL}' >> "$FORBOTSAKE_HOME/review-metrics.jsonl" 2>/dev/null || true
+```
+
+Replace RESULT, FILENAME, N, BOOL with actual values.
+
+---
 
 ## Phase 3: Run the Review
 

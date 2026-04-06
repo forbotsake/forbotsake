@@ -48,7 +48,7 @@ UNDERSTAND → CHALLENGE → RESEARCH → PLAN → SHARPEN → CREATE → RED TE
 | 4 | RESEARCH | `/forbotsake-icp` | Deep-dive your ideal customer: behavior, pain, communities |
 | 5 | PLAN | `/forbotsake-content-plan` | Content calendar: themes, formats, cadence per channel |
 | 5.5 | SHARPEN | `/forbotsake-sharpen` | Research a specific target, map connections, build multi-touch plan |
-| 6 | CREATE | `/forbotsake-create` | Write content + generate visuals: text-cards, AI images, video |
+| 6 | CREATE | `/forbotsake-create` | Research platform patterns + write content + generate visuals |
 | 7 | REVIEW | `/forbotsake-content-check` | Pre-publish check: brand voice, messaging, channel fit, visual consistency |
 | 8 | SHIP | `/forbotsake-publish` | Auto-post with media via Chrome, or copy-paste ready text + image paths |
 | 9 | MEASURE | `/forbotsake-retro` | Weekly retro: what worked, what to change next |

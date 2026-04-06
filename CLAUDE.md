@@ -26,7 +26,27 @@ Skills follow a sequence: UNDERSTAND → CHALLENGE → RESEARCH → PLAN → **S
 
 SHARPEN is optional but recommended for high-value targeted opportunities (specific people or organizations). It sits between PLAN and CREATE: content-plan identifies targets, sharpen refines them into multi-touch execution plans, create generates the actual content.
 
-**Default entry point:** `/forbotsake-go` — detects pipeline state and runs remaining stages. Suggest this when a user is early in their marketing journey or doesn't know which skill to use. Individual skills (like `/forbotsake-marketing-start`) are available for users who want control over specific stages.
+**Default entry point:** `/forbotsake-go` -- detects pipeline state and runs remaining stages. Suggest this when a user is early in their marketing journey or doesn't know which skill to use. Individual skills (like `/forbotsake-marketing-start`) are available for users who want control over specific stages.
+
+## Platform Research (Inline)
+
+`/forbotsake-create` automatically researches what's working on the target platform before writing content. This happens in Phase 2.5, between channel selection and content writing. No separate skill or setup needed.
+
+### How It Works
+1. After you pick a channel and topic, forbotsake runs 3-5 web searches for top-performing content in your niche on that platform
+2. Extracts patterns: hook types, structures, CTA styles, emotional triggers
+3. Uses those patterns to shape the content it writes
+4. Saves research metadata in the content file's frontmatter
+5. Appends patterns to `platform-intelligence.md` (auto-generated, safe to delete)
+
+### Controls
+- `FORBOTSAKE_FAST=1` skips live platform research (and adversarial gates). If `platform-intelligence.md` exists, cached patterns are still used.
+- Research adds ~30-90 seconds per content piece.
+- If web search fails or returns too few results, content creation continues using strategy.md only.
+
+### Key Artifacts
+- `platform-intelligence.md` -- auto-generated append log of discovered patterns per platform. Grows over time. Safe to delete (recreated on next run). Gitignored.
+- Content frontmatter `platform_research:` section -- per-piece metadata showing what research was done and which patterns were used.
 
 ## Multi-Modal Visual Generation
 
@@ -61,7 +81,7 @@ Three adversarial review gates catch bad content before it goes public:
 
 3. **Publish Kill Switch** (in /forbotsake-publish): Last check before content goes public. Scans for banned patterns, factual claims, and embarrassment risk. GO or HOLD (always requires explicit confirmation).
 
-**Fast mode:** Set `FORBOTSAKE_FAST=1` to skip all adversarial gates. Useful during rapid iteration.
+**Fast mode:** Set `FORBOTSAKE_FAST=1` to skip platform research (live web searches) AND all adversarial gates. Cached patterns from `platform-intelligence.md` are still used if available. Useful during rapid iteration.
 
 **Custom banned patterns:** Add your own to `~/.forbotsake/banned-patterns.md`. Defaults are in `knowledge/banned-patterns-defaults.md`.
 

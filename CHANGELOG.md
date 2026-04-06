@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.0 (2026-04-06)
+
+### Added
+- **Inline platform research** in `/forbotsake-create`. Before writing content, the skill runs 3-5 web searches for top-performing posts in your niche on the target platform. Extracts hook types, structures, CTA styles, and emotional triggers. Patterns shape the content it writes.
+- Platform-specific search strategies for X/Twitter, LinkedIn, Blog/SEO, Reddit/HN, and Email.
+- `platform-intelligence.md` -- auto-generated append log of discovered patterns per platform. Grows over time. Safe to delete (recreated on next run).
+- `platform_research:` frontmatter section in content files -- per-piece metadata showing what research was done and which patterns were used.
+- Prompt injection sanitization for web search results injected into content generation.
+- 90-second research budget with sequential abort on search failure.
+- FAST mode (`FORBOTSAKE_FAST=1`) now also skips live platform research. Cached patterns from `platform-intelligence.md` are still used if available.
+
+### Changed
+- `/forbotsake-create` adds Phase 2.5 (Platform Reality Check) between channel selection and content writing.
+- `.gitignore` includes `platform-intelligence.md`.
+- CLAUDE.md documents platform research controls and artifacts.
+- README pipeline table updated.
+
 ## 0.6.0 (2026-04-05)
 
 ### Added

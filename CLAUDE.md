@@ -1,4 +1,4 @@
-# forbotsake — Marketing Skills for Claude Code
+# forbotsake — Marketing Skills for AI Coding Agents
 
 ## Skill routing
 
@@ -70,3 +70,31 @@ Three adversarial review gates catch bad content before it goes public:
 ## Autopilot Mode
 
 `/forbotsake-cron install` enables autonomous posting. A cron job runs every 30 minutes, reads `content-calendar.md` for scheduled posts, and uses `claude -p --chrome` to post reviewed content via Chrome. The laptop must be awake with Chrome running. Content-calendar.md entries need a `scheduled_datetime` column (ISO 8601 with timezone offset, e.g., `2026-04-07T10:00:00-07:00`). Only content with `status: reviewed` is auto-posted. Pause/resume/status via `/forbotsake-cron`.
+
+## Cross-Agent Compatibility
+
+forbotsake works on Claude Code, Codex, and other AI coding agents via template transpilation.
+
+### How it works
+- SKILL.md.tmpl files are the source of truth (one per skill)
+- `bun run gen:skill-docs` generates host-specific SKILL.md files
+- Generated files are committed to the repo (zero install-time build deps)
+- Host configs in `hosts/*.ts` define path rewrites, tool rewrites, and degradation contracts
+
+### Adding a new host
+1. Create `hosts/newhost.ts` with a HostConfig object
+2. Register it in `hosts/index.ts`
+3. Run `bun run gen:skill-docs`
+4. Update `bin/install.sh` with detection logic
+
+### Degradation contracts
+Each host config declares exactly what is skipped or degraded:
+- `generation.skipSkills`: skills that don't work on this host (e.g., forbotsake-cron on Codex)
+- `suppressedResolvers`: template sections that are omitted (e.g., Chrome publish flow)
+- `toolRewrites`: Claude-specific tool references rewritten for the host
+
+### Browser tiers
+1. Tier 0: Computer use (OpenClaw, Claude Computer Use) ... full browser control via natural language
+2. Tier 1: Claude for Chrome MCP ... authenticated browser automation
+3. Tier 2: gstack browse binary ... headless Playwright for research/verification
+4. Tier 3: Text-only ... COPY mode for publishing, WebSearch for research

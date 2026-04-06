@@ -1,0 +1,14 @@
+name: forbotsake-retro
+description: >-
+  Stage 9: MEASURE. Reviews what you published, analyzes performance data,
+
+  and produces a retro report with evidence-based recommendations.
+
+  Tells you what to double down on, what to drop, and what to try next.
+
+  Use when: "what worked", "marketing retro", "measure results", "review
+  performance",
+
+  "which content performed best", "should I keep doing this".
+
+  Proactively invoke one week after /forbotsake-publish was last run.

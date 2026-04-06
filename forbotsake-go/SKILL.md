@@ -30,13 +30,16 @@ FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
 mkdir -p "$FORBOTSAKE_HOME"
 
 # Check for updates
-_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-go/SKILL.md" -type f 2>/dev/null | head -1)" 2>/dev/null)
+_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-marketing-start/SKILL.md" -type f 2>/dev/null | head -1)" 2>/dev/null)
 _FBS_ROOT=$(cd "${_SKILL_DIR}/.." 2>/dev/null && pwd || true)
 _UPD=""
 [ -n "$_FBS_ROOT" ] && [ -x "$_FBS_ROOT/bin/forbotsake-update-check" ] && _UPD=$("$_FBS_ROOT/bin/forbotsake-update-check" 2>/dev/null || true)
 [ -n "$_UPD" ] && echo "$_UPD" || true
 _BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 echo "BRANCH: $_BRANCH"
+```
+
+```bash
 
 # Set orchestrated mode for sub-skills via file flag (env vars don't propagate across Skill tool invocations)
 _ORCH_FLAG="$FORBOTSAKE_HOME/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"

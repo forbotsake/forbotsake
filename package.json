@@ -1,0 +1,14 @@
+{
+  "name": "forbotsake",
+  "version": "0.7.0",
+  "private": true,
+  "scripts": {
+    "gen:skill-docs": "bun scripts/gen-skill-docs.ts",
+    "gen:skill-docs:dry-run": "bun scripts/gen-skill-docs.ts --dry-run",
+    "gen:skill-docs:claude": "bun scripts/gen-skill-docs.ts --host claude",
+    "gen:skill-docs:codex": "bun scripts/gen-skill-docs.ts --host codex"
+  },
+  "devDependencies": {
+    "yaml": "^2.4.0"
+  }
+}

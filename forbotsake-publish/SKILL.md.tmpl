@@ -1,0 +1,693 @@
+---
+name: forbotsake-publish
+description: |
+  Stage 8: SHIP. Two modes: POST (auto-post via Claude for Chrome) or COPY
+  (format for copy-paste). Handles X/Twitter threads, LinkedIn posts, blog posts,
+  and more. Logs everything for retrospective analysis.
+  For auto-posting, the user needs the Claude for Chrome extension installed.
+  Without it, the skill falls back to COPY mode automatically.
+  Use when: "publish this", "format for twitter", "post to X", "ship this content",
+  "format for blog", "send this email", "ready to publish", "auto-post",
+  "post this to X", "publish to LinkedIn".
+  Proactively invoke when the user has content in content/ and says they want to ship it.
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - AskUserQuestion
+  - mcp__claude-in-chrome__tabs_context_mcp
+  - mcp__claude-in-chrome__tabs_create_mcp
+  - mcp__claude-in-chrome__navigate
+  - mcp__claude-in-chrome__read_page
+  - mcp__claude-in-chrome__get_page_text
+  - mcp__claude-in-chrome__find
+  - mcp__claude-in-chrome__computer
+  - mcp__claude-in-chrome__upload_image
+  - mcp__claude-in-chrome__javascript_tool
+---
+
+# /forbotsake-publish
+
+From draft to published. Format, post, log.
+
+## Preamble
+
+{{FBS_PREAMBLE}}
+
+```bash
+
+# Orchestrated mode (invoked by forbotsake-go, propagated via file flag)
+_ORCH_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+FORBOTSAKE_ORCHESTRATED=$(cat "$_ORCH_FILE" 2>/dev/null || echo 0)
+echo "ORCHESTRATED: $FORBOTSAKE_ORCHESTRATED"
+
+# Check for strategy.md
+if [ -f strategy.md ]; then
+  echo "STRATEGY: yes"
+else
+  echo "STRATEGY: no"
+  echo "WARNING: No strategy.md found. Run /forbotsake-marketing-start first."
+fi
+
+# Check for content directory
+if [ -d content/ ]; then
+  echo "CONTENT_DIR: yes"
+  ls -1 content/ 2>/dev/null | head -20
+else
+  echo "CONTENT_DIR: no"
+fi
+
+# Check for published log
+if [ -f published-log.md ]; then
+  echo "PUBLISHED_LOG: yes"
+  tail -5 published-log.md
+else
+  echo "PUBLISHED_LOG: no"
+fi
+```
+
+If output shows `UPGRADE_AVAILABLE <old> <new>`: read the forbotsake-upgrade SKILL.md
+at `$_FBS_ROOT/forbotsake-upgrade/SKILL.md` (where `_FBS_ROOT` is the variable already
+resolved in the preamble bash above) and follow the "Inline upgrade flow" section **Step 1
+only**. If Step 1 results in "Yes" or "Always" (proceed with upgrade), continue through
+Steps 2-7 of the inline flow. If Step 1 results in "Not now" or "Never" (declined),
+skip Steps 2-7 entirely and continue with this skill immediately.
+
+If output shows `JUST_UPGRADED <old> <new>`: tell user
+"Running forbotsake v{new} (just updated from v{old})!" and continue.
+
+If `STRATEGY` is `no`: "No strategy.md found. You need positioning and channel strategy before publishing. Run `/forbotsake-marketing-start` first."
+Stop here unless user insists.
+
+If `CONTENT_DIR` is `no`: "No content/ directory found. Run `/forbotsake-create` to write your first piece, or point me to the content you want to publish."
+Use AskUserQuestion to let the user provide content manually if they prefer.
+
+## Chrome Detection
+
+After the preamble checks, detect whether Claude for Chrome browser tools are available. Try calling `mcp__claude-in-chrome__tabs_context_mcp` to check if the Chrome extension is connected. If it responds successfully, set CHROME_AVAILABLE to yes. If it errors or is not available, set CHROME_AVAILABLE to no.
+
+If CHROME_AVAILABLE is yes: the user can choose POST mode (auto-post via Chrome) or COPY mode.
+
+If CHROME_AVAILABLE is no: silently default to COPY mode. Mention once: "Auto-posting available with the Claude for Chrome extension. Using copy-paste mode."
+
+## Phase 1: Select Content and Platform
+
+**Orchestrated mode (`ORCHESTRATED` is `1`):**
+- Auto-select content files: format ALL content files with `status: reviewed`, `status: revised`, or `status: reviewed-override` in frontmatter
+- Auto-select platform from each file's `channel:` frontmatter field
+- If a file has no channel specified, use the highest-scored channel from strategy.md
+- Skip the content/platform selection AskUserQuestion
+- In Phase 4: skip "Want me to format this for another platform too?" — just format and log
+- After logging to published-log.md, update each published content file's frontmatter from `status: reviewed` (or `revised`/`reviewed-override`) to `status: published`. This prevents re-publish loops when forbotsake-go runs again.
+- Skip Phase 5 (Next Steps) — the orchestrator handles what's next
+
+**Interactive mode (`ORCHESTRATED` is `0`):**
+
+Read `strategy.md` to understand the channel strategy and ICP.
+
+Read all files in `content/` to see what's available. Check each file's frontmatter for `status` field. Files with `status: published` in the log should be noted as already published.
+
+Use AskUserQuestion:
+
+> "Here's what I found in your content/ directory:
+>
+> {list each file with a one-line summary and status}
+>
+> Which piece do you want to publish? And which platform?
+>
+> **Auto-post** (I post for you via Chrome):
+> - **X/Twitter** (threads + single tweets)
+> - **LinkedIn** (posts)
+>
+> **Copy-paste + open browser** (I format it, open the compose page, you paste):
+> - **Blog** (Ghost, WordPress, Dev.to, Medium, Substack)
+> - **Reddit**
+> - **Hacker News**
+> - **Product Hunt**
+>
+> **Copy-paste only:**
+> - **Email** (formatted for your ESP)
+>
+> **CLI:**
+> - **GitHub** (PRs via `gh` CLI)
+>
+> Pick a content piece and a platform."
+
+If CHROME_AVAILABLE is no, present all platforms as "Copy-paste" mode only. Do not show the Auto-post tier.
+
+If the user says "all" or "publish everything", loop through each unpublished content file and process them sequentially. Between posts to the same platform, wait 30-60 seconds. Maximum 5 posts to the same platform per session to avoid triggering anti-automation measures.
+
+### Mode Selection
+
+If CHROME_AVAILABLE is yes AND the selected platform is X/Twitter or LinkedIn, use AskUserQuestion:
+
+> "How do you want to publish to {platform}?
+> A) **POST** — I'll post it for you right now via Chrome
+> B) **COPY** — just give me the formatted text"
+
+For blog platforms, Reddit, HN, and Product Hunt: if Chrome is available, offer to open the platform's compose page in a new Chrome tab after formatting. This is a "COPY + deep link" flow — you format the content, open the compose URL, and the user pastes it in.
+
+For Email and GitHub: always COPY mode (email ESPs vary too much for automation; GitHub uses `gh` CLI).
+
+## Phase 1.5: Visual Asset Detection
+
+For each selected content file, check if visual assets exist alongside it:
+
+```bash
+# For a content file like content/2026-04-07-x-launch-thread.md
+# Look for: content/2026-04-07-x-launch-thread-visual-*.png or *.mp4
+ls content/*-visual-*.{png,jpg,mp4} 2>/dev/null
+```
+
+Also read the content file's frontmatter for visual metadata:
+- `visual_treatment`: none/text-card/ai-image/video
+- `visual_status`: generated/failed/pending/skipped
+- `visual_alt`: accessibility description
+
+**If visual assets exist** (`visual_status: generated`):
+- Note which files are available and their paths
+- These will be attached during posting (Phase 4)
+
+**If visual_treatment is not `none` but no visual file exists** (`visual_status: failed/pending/skipped`):
+- **Interactive mode:** Warn the user: "This {channel} post has visual treatment '{visual_treatment}' but no image was generated. Options: A) Publish text-only B) Generate the image now C) Cancel"
+- **Orchestrated mode:** Publish text-only, log the missing visual
+
+**If visual_treatment is `none`:** No visual handling needed, proceed normally.
+
+## Phase 2: Format for Platform
+
+### X/Twitter Thread Format
+
+Read the knowledge framework for thread structure:
+```bash
+_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-publish/SKILL.md" -type f 2>/dev/null | head -1)")
+echo "SKILL_DIR: $_SKILL_DIR"
+```
+
+Read `$_SKILL_DIR/../knowledge/frameworks/content-strategy.md` for X thread format guidelines.
+
+Format the content as a numbered thread following these rules:
+
+1. **Tweet 1 (The Hook):** Must stop the scroll. Lead with the most surprising, contrarian, or specific claim. No preamble. No "I've been thinking about..." Start with the insight. Must be under 280 characters.
+
+2. **Tweets 2-N (The Body):** One idea per tweet. Each tweet must stand alone if someone screenshots it. Use line breaks for readability. Keep each under 280 characters.
+
+3. **Final Tweet (The CTA):** What should the reader do? Follow, reply, check out the product, share? Be specific. Include the link if there is one.
+
+Output format:
+```
+---
+THREAD: {title}
+Platform: X/Twitter
+Tweets: {count}
+Character counts: verified
+---
+
+1/ {hook tweet}
+[{character count}/280]
+
+2/ {body tweet}
+[{character count}/280]
+
+...
+
+{N}/ {CTA tweet}
+[{character count}/280]
+```
+
+Verify every tweet is under 280 characters. If any exceeds the limit, split or rewrite it. Do NOT deliver a thread with tweets over 280 characters.
+
+### Blog Post Format
+
+Format with full SEO structure:
+
+```
+---
+BLOG POST: {title}
+Platform: Blog
+Word count: {count}
+Reading time: {X} min
+---
+
+## SEO Meta
+- **Title tag** (under 60 chars): {title}
+- **Meta description** (under 155 chars): {description}
+- **URL slug:** {slug}
+- **Target keyword:** {keyword}
+- **Secondary keywords:** {list}
+
+## Headline Options
+1. {headline option 1 - benefit-focused}
+2. {headline option 2 - curiosity-driven}
+3. {headline option 3 - specific/numbered}
+
+## Featured Image Suggestions
+- {description of image 1 - what to create or find}
+- {description of image 2 - alternative option}
+
+## Post Body
+
+{formatted blog post with H2/H3 headers, short paragraphs, bold key phrases}
+
+## Internal Links
+- {suggest where to link to product, other content, etc.}
+```
+
+### Email Format
+
+Format with multiple subject line options and clear structure:
+
+```
+---
+EMAIL: {title}
+Platform: Email
+Word count: {count}
+---
+
+## Subject Line Options
+1. {subject line 1} [{character count} chars]
+2. {subject line 2} [{character count} chars]
+3. {subject line 3} [{character count} chars]
+
+## Preview Text
+{the text that shows after the subject in inbox, under 90 chars}
+
+## Email Body
+
+{formatted email - short paragraphs, conversational, one clear ask}
+
+## CTA
+- **Primary CTA:** {button text} -> {URL or action}
+- **Secondary CTA:** {text link or PS line}
+
+## Send Time Suggestion
+{best time to send based on audience from strategy.md}
+```
+
+### LinkedIn Post Format
+
+Format for LinkedIn's algorithm and audience:
+
+```
+---
+LINKEDIN POST: {title}
+Platform: LinkedIn
+Character count: {count}/3000
+---
+
+{hook line - must work as the "see more" preview}
+
+{body - short paragraphs, line breaks between each, no walls of text}
+
+{CTA or question to drive comments}
+
+{3-5 relevant hashtags}
+```
+
+### Other Platform
+
+Use AskUserQuestion to understand the platform's constraints (character limits, format, audience norms), then format accordingly.
+
+## Phase 3: Publish Kill Switch + Quality Check
+
+**Skip the kill switch (3a) if `FORBOTSAKE_FAST` env var is `1`.** Print: "FORBOTSAKE_FAST=1: skipping publish kill switch." Jump to 3b.
+
+This is the last gate before content goes public. Not a deep review (that happened
+in /forbotsake-content-check). This is a final sanity check: "would I be embarrassed?"
+
+### Phase 3a: Kill Switch (Adversarial)
+
+Read the banned patterns files:
+
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-marketing-start/SKILL.md" -type f 2>/dev/null | head -1)" 2>/dev/null)
+_FBS_ROOT=$(cd "${_SKILL_DIR}/.." 2>/dev/null && pwd || true)
+[ -n "$_FBS_ROOT" ] && [ -f "$_FBS_ROOT/knowledge/banned-patterns-defaults.md" ] && echo "DEFAULTS: found" || echo "DEFAULTS: not_found"
+[ -f "$FORBOTSAKE_HOME/banned-patterns.md" ] && echo "USER_PATTERNS: found" || echo "USER_PATTERNS: none"
+```
+
+Read the banned patterns file(s). Then scan the formatted content for:
+
+1. **Embarrassment test:** Read the final formatted content as if you're the ICP seeing it
+   for the first time. Would you show this to your smartest friend? Any sentence that
+   makes you cringe?
+
+2. **Factual claims:** Any claims that could be verifiably wrong? Specific numbers,
+   statistics, or comparisons that the founder hasn't verified?
+
+3. **AI tell scan:** Check for patterns from the banned patterns files. Count matches.
+   Each pattern match adds to a score. This is a contributing signal, not an automatic
+   fail. 3+ pattern matches across the piece = HOLD.
+
+4. **Platform fit:** Does the formatted version look right for the platform?
+   Character limits respected? Thread structure correct? Links formatted correctly?
+
+**Scoring:** Each dimension contributes to a GO/HOLD verdict.
+- Any factual claim issue = HOLD
+- Embarrassment test fails = HOLD
+- 3+ banned pattern matches = HOLD
+- Platform fit issues = fix inline, don't HOLD
+
+**If GO:** Print "Publish Kill Switch: GO. Content cleared for publishing." Continue to Phase 3b.
+
+**If HOLD:** This ALWAYS requires explicit user confirmation, even in orchestrated mode.
+
+> "**Publish Kill Switch: HOLD**
+>
+> Last-gate check before this goes public:
+> {for each issue:}
+> - **{dimension}:** {specific concern}
+>
+> This content has not been published yet. Your call."
+
+Use AskUserQuestion:
+A) Publish anyway (I've reviewed the concerns)
+B) Go back and fix it
+
+If A: log override to metrics, continue.
+If B: stop the publish flow. User returns to /forbotsake-content-check or manual editing.
+
+Log result:
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+mkdir -p "$FORBOTSAKE_HOME"
+echo '{"gate":"publish","ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","result":"RESULT","content_file":"FILENAME","override":BOOL}' >> "$FORBOTSAKE_HOME/review-metrics.jsonl" 2>/dev/null || true
+```
+
+### Phase 3b: Quality Check (Structural)
+
+Before delivering the formatted content, verify:
+
+1. **Character limits:** Every tweet under 280. Blog title under 60. Email subjects tested for length.
+2. **ICP alignment:** Does this speak to the person defined in strategy.md? Would they stop scrolling?
+3. **CTA present:** Every piece has a clear next action for the reader.
+4. **No jargon leak:** The content uses the reader's language, not the builder's.
+5. **Link placeholders:** If URLs are needed, mark them clearly as `[YOUR_LINK_HERE]` so nothing is missed.
+
+If any check fails, fix it before presenting to the user.
+
+## Phase 4: Deliver or Post
+
+This phase splits based on the mode selected in Phase 1.
+
+### COPY Mode (all platforms)
+
+Present the formatted content to the user with:
+
+> "Here's your {platform}-ready content. Copy-paste ready.
+>
+> {formatted content}
+>
+> {If visual asset exists: "**Attach this image:** `{path to visual file}`
+> Alt text: {visual_alt from frontmatter}"}
+>
+> {If visual_treatment is video and video file exists: "**Attach this video:** `{path to video file}`"}
+>
+> Before you post, double-check:
+> - [ ] Links are correct
+> - [ ] Handle/username is right
+> - [ ] {If visual: "Image/video is attached"}
+> - [ ] Timing is good (see send time suggestion if applicable)
+>
+> Want me to format this for another platform too?"
+
+For blog platforms, Reddit, HN, and Product Hunt: if Chrome is available, also open the platform's compose page in a new tab using `mcp__claude-in-chrome__tabs_create_mcp` so the user can paste directly. Tell the user: "I've opened {platform} in a new tab. Paste your content there."
+
+Skip to Phase 5 (Log).
+
+### POST Mode (X/Twitter and LinkedIn only)
+
+POST mode automates the entire posting flow via Claude for Chrome. It works best for X and LinkedIn, which have stable compose UIs. Other platforms may have lower reliability. COPY mode always works as a fallback.
+
+#### Step 4a: Account Identity Preflight
+
+Before posting anything, verify the logged-in account:
+
+1. Use `mcp__claude-in-chrome__tabs_create_mcp` to open the platform's home page (x.com/home for X, linkedin.com/feed for LinkedIn).
+2. Use `mcp__claude-in-chrome__read_page` or `mcp__claude-in-chrome__get_page_text` to find the current username/handle on the page.
+3. Use AskUserQuestion: "I see you're logged in as {handle} on {platform}. Is that the right account to post from?"
+4. If user confirms, proceed. If not, tell them to switch accounts in Chrome and try again, or use COPY mode.
+
+If the page shows a login wall instead of the home feed, the user is not logged in. Fall back to COPY mode: "Looks like you're not logged into {platform} in Chrome. Here's the formatted text to copy-paste instead."
+
+#### Step 4b: Navigate to Compose
+
+Read the publishing automation knowledge framework for platform-specific instructions:
+```bash
+_SKILL_DIR=$(dirname "$(find ~/.claude/skills -path "*/forbotsake-publish/SKILL.md" -type f 2>/dev/null | head -1)")
+echo "SKILL_DIR: $_SKILL_DIR"
+```
+
+Read `$_SKILL_DIR/../knowledge/frameworks/publishing-automation.md` for the platform-specific posting flow. If this file does not exist, use the inline instructions below.
+
+**For X/Twitter:**
+1. Use `mcp__claude-in-chrome__navigate` to go to `https://x.com/compose/post`
+2. Wait for the compose area to load
+3. Use `mcp__claude-in-chrome__read_page` to verify the compose UI is present
+
+**For LinkedIn:**
+1. Use `mcp__claude-in-chrome__navigate` to go to `https://linkedin.com/feed`
+2. Use `mcp__claude-in-chrome__find` to locate the "Start a post" button
+3. Use `mcp__claude-in-chrome__computer` to click it
+4. Wait for the compose modal to appear
+
+If navigation fails or the compose UI is not found:
+- **What happened:** "Could not find the compose area on {platform}."
+- **Why:** "The page may have changed, or you may not be logged in."
+- **Fix:** "Try refreshing the page in Chrome, or use COPY mode instead."
+Fall back to COPY mode and deliver the formatted text.
+
+#### Step 4c: Fill Content
+
+**X/Twitter single tweet:**
+1. **If visual asset exists:** Attach image FIRST before typing text.
+   - Use `mcp__claude-in-chrome__upload_image` with the visual file path to upload the image to the compose area.
+   - If `upload_image` tool is not available: use `mcp__claude-in-chrome__computer` to click the media icon (camera/image button), then try attaching via the file dialog. If that fails, fall back to COPY mode with the image path noted.
+   - Wait for the image preview to appear in the compose area before continuing.
+2. Use `mcp__claude-in-chrome__computer` to click the compose textarea
+3. Use `mcp__claude-in-chrome__computer` to type the tweet text
+4. Take a screenshot: `screencapture -x /tmp/forbotsake-pre-post-$(date +%s).png` and then use the Read tool to show it to the user. If screencapture fails (non-macOS), skip the screenshot and continue.
+
+**X/Twitter thread:**
+1. **If visual asset exists:** Attach image to tweet 1 (hero placement) using `mcp__claude-in-chrome__upload_image` BEFORE typing text. If `visual_count` > 1, attach subsequent images to their corresponding tweets.
+2. Use `mcp__claude-in-chrome__computer` to click the compose textarea
+3. Type tweet 1 text
+3. Look for the thread "+" button (usually near the bottom of the compose area) and click it
+4. A new tweet textarea appears. Type tweet 2 text.
+5. Repeat for all tweets in the thread.
+6. Take a screenshot: `screencapture -x /tmp/forbotsake-pre-post-$(date +%s).png` and use the Read tool to show it.
+
+**Compose-time failure recovery:** If thread composing fails (e.g., the "+" button is not found after tweet N):
+1. Immediately stop.
+2. The thread has NOT been posted yet (it's still in the compose UI).
+3. Show the user: "Could not add tweet {N+1} to the thread. Here's the full thread as copy-paste instead."
+4. Fall back to COPY mode. Do not log as PARTIAL (nothing was published).
+
+**Post-time failure recovery:** If the "Post all" button is clicked but the thread only partially appears (platform error):
+1. Use `mcp__claude-in-chrome__read_page` to check what was actually published.
+2. If partial content is live, capture the URL.
+3. Log to published-log.md as PARTIAL (see Phase 5).
+4. Show the user: "Thread partially posted ({N}/{total} tweets). Here are the remaining tweets to post manually: {remaining tweets formatted}."
+
+**LinkedIn post:**
+1. **If visual asset exists:** Attach image FIRST.
+   - Use `mcp__claude-in-chrome__upload_image` to upload the image into the LinkedIn compose modal.
+   - If it's a carousel (multiple text-cards), upload as a PDF document using the document attachment option.
+   - Wait for the image/document preview to appear.
+2. Use `mcp__claude-in-chrome__computer` to click the compose area in the modal
+3. Type the post content
+4. Take a screenshot using `screencapture` as pre-post evidence
+
+#### Step 4d: Confirm and Post
+
+Before clicking Post, show the user a screenshot of the filled compose area and ask for confirmation:
+
+> "Here's what's ready to post on {platform}. {screenshot}
+>
+> Ready to publish?"
+
+Use AskUserQuestion with options: A) Post it, B) Edit first (switch to COPY mode), C) Cancel.
+
+If A (Post):
+1. Use `mcp__claude-in-chrome__computer` to click the Post/Publish button.
+2. Wait 3 seconds for the platform to process.
+
+If the user specifies a time (e.g., "schedule for Monday 10am PT"):
+1. Instead of clicking Post, look for the schedule button (calendar/clock icon near the Post button).
+2. Click it to open the scheduling UI.
+3. Set the date and time using the platform's native scheduling interface.
+4. Confirm the schedule.
+5. Log as POST in Phase 5 with a "Scheduled for: {date/time}" note.
+
+#### Step 4e: Verify and Capture
+
+After posting:
+1. Use `mcp__claude-in-chrome__read_page` or `mcp__claude-in-chrome__get_page_text` to read the current page.
+2. Check that the URL has changed to include a post ID (e.g., `x.com/{handle}/status/{id}`).
+3. Verify that key phrases from the source content appear on the published page. Note: platforms mangle URLs (t.co links on X) and may convert special characters. Compare the main text content, not URLs or formatting.
+4. Take a screenshot: `screencapture -x /tmp/forbotsake-published-$(date +%s).png` and use the Read tool to show it.
+5. Extract the post URL.
+
+If URL capture fails (some platforms don't redirect immediately):
+Tell the user: "Posted successfully. The URL didn't load yet. Paste it into published-log.md when you see it."
+
+If content verification fails (published content doesn't match source):
+Warn: "Published content may not match source. Please verify the post on {platform}."
+
+If any step in Phase 4 fails, fall back to COPY mode and log the failure. Every error message must include:
+1. **What happened** (specific failure)
+2. **Why** (likely cause)
+3. **Fix** (actionable next step)
+
+## Phase 5: Log
+
+Append to `published-log.md` in the project root. Create the file if it doesn't exist.
+
+### Successful POST entry:
+```markdown
+## {date} - {platform}
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Format:** {thread/blog/email/linkedin/other}
+- **Mode:** POST
+- **Link:** {captured URL}
+- **Visual:** {visual_treatment} via {visual_provider} — {path to visual file or "none"}
+- **Notes:** {any relevant context}
+
+---
+```
+
+### Autonomous POST entry (cron/tick mode):
+```markdown
+## {date} - {platform} (AUTO)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Format:** {thread/blog/email/linkedin/other}
+- **Mode:** POST (autonomous/cron)
+- **Link:** {captured URL}
+- **Scheduled:** {ISO 8601 from content-calendar.md}
+- **Posted:** {ISO 8601 actual post time}
+- **Result:** success
+- **Notes:** Auto-posted by forbotsake-cron
+
+---
+```
+
+### Autonomous FAILED entry (cron/tick mode):
+```markdown
+## {date} - {platform} (AUTO/FAILED)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Mode:** POST (autonomous/cron)
+- **Result:** failed
+- **Failure reason:** {specific error}
+- **Notes:** Content status set to `failed`. Set back to `reviewed` to retry.
+
+---
+```
+
+### MISSED entry (catch-up skip policy):
+```markdown
+## {date} - {platform} (MISSED)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Scheduled:** {ISO 8601 from content-calendar.md}
+- **Result:** missed
+- **Reason:** Laptop was asleep, catch-up policy: skip
+- **Notes:** Content remains `reviewed`. Manually post or reschedule.
+
+---
+```
+
+### Successful COPY entry:
+```markdown
+## {date} - {platform}
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Format:** {thread/blog/email/linkedin/other}
+- **Mode:** COPY
+- **Link:** pending
+- **Visual:** {visual_treatment} via {visual_provider} — {path to visual file or "none"}
+- **Notes:** Copy-paste delivered. Update link after posting. {If visual exists: "Attach image: {path}"}
+
+---
+```
+
+### Partial publish entry (thread interrupted):
+```markdown
+## {date} - {platform} (PARTIAL)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Format:** thread
+- **Mode:** POST (partial)
+- **Link:** {URL of first tweet if captured}
+- **Posted:** {N}/{total} tweets
+- **Notes:** Thread posting interrupted after tweet {N}. Remaining tweets delivered as copy-paste.
+
+---
+```
+
+### Failed POST entry (fell back to COPY):
+```markdown
+## {date} - {platform} (FAILED -> COPY)
+
+- **Content:** {title or first line}
+- **Source file:** {path to content file}
+- **Format:** {format}
+- **Mode:** POST (failed)
+- **Failure reason:** {Chrome not detected | login wall | element not found | rate limited | content mismatch}
+- **Fallback:** COPY mode delivered
+- **Link:** pending
+
+---
+```
+
+If `published-log.md` doesn't exist, create it with a header:
+
+```markdown
+# Published Content Log
+
+Track what was published, where, and when. Used by /forbotsake-retro for measurement.
+
+---
+
+{first entry}
+```
+
+After logging, update the source content file's frontmatter status based on the outcome:
+- **POST mode success**: set `status: published`
+- **POST mode partial**: set `status: partial`
+- **COPY mode**: do NOT change the status (content is formatted but not yet posted)
+- **FAILED → COPY fallback**: do NOT change the status (posting failed, content not live)
+
+## Phase 6: Next Steps
+
+**Orchestrated mode (`ORCHESTRATED` is `1`):** Skip this phase entirely. Confirm: "Formatted and logged {N} pieces to published-log.md." Then stop.
+
+**Interactive mode (`ORCHESTRATED` is `0`):** Tell the user:
+
+> "Logged to published-log.md. {If POST mode: 'Posted to {platform} as {handle}.'}
+>
+> {If links are pending: 'Update the link in published-log.md after posting.'}
+>
+> Track results and run `/forbotsake-retro` next week to measure what worked.
+>
+> Want to publish to another platform? Or run `/forbotsake-create` for the next piece?"
+
+For batch publishing, show a summary:
+> "Published {N}/{total} pieces:
+> - {piece 1}: {platform} ({mode}) {URL or 'pending'}
+> - {piece 2}: {platform} ({mode}) {URL or 'pending'}
+> ...
+>
+> Run `/forbotsake-retro` next week to measure results."

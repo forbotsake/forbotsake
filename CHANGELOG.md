@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.7.0 (2026-04-06)
+
+### Added
+- **Cross-agent compatibility via template transpilation.** forbotsake now works on Codex, with Kimi and other agents coming next. One codebase, multiple hosts.
+- `hosts/` directory with typed HostConfig objects per agent (claude.ts, codex.ts).
+- `scripts/gen-skill-docs.ts` template generator with resolver system. Run `bun run gen:skill-docs` to regenerate for all hosts.
+- 4 template resolvers: FBS_PREAMBLE (host-aware path discovery), FBS_BROWSER_DETECT (4-tier browser capability), FBS_CHROME_PUBLISH_FLOW (Chrome MCP posting, Claude-only), FBS_ADVERSARIAL_REVIEW (Agent vs inline review).
+- `.agents/skills/` directory with pre-generated Codex SKILL.md files (12 skills, forbotsake-cron skipped).
+- `AGENTS.md` for cross-agent skill discovery (AGENTS.md standard, Linux Foundation).
+- 4-tier browser strategy: Computer Use (Tier 0) > Chrome MCP (Tier 1) > browse binary (Tier 2) > text-only (Tier 3).
+- Explicit degradation contracts per host. Each host config declares exactly what is skipped and why.
+
+### Changed
+- All 13 SKILL.md files converted to SKILL.md.tmpl templates (source of truth).
+- `bin/install.sh` now auto-detects installed agents (Claude, Codex, Kimi) and sets up for all.
+- `bin/install.sh --clean` removes all forbotsake symlinks across all agents.
+- `bin/install.sh --hosts claude,codex` for explicit host selection.
+
+### For contributors
+- `package.json` added with `bun run gen:skill-docs` scripts.
+- `scripts/convert-to-tmpl.ts` one-time conversion tool (used during v0.7.0 development).
+- `.gitattributes` marks generated files with `linguist-generated=true`.
+
 ## 0.6.0 (2026-04-05)
 
 ### Added

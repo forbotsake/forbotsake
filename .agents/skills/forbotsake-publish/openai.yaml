@@ -1,0 +1,22 @@
+name: forbotsake-publish
+description: >-
+  Stage 8: SHIP. Two modes: POST (auto-post via Claude for Chrome) or COPY
+
+  (format for copy-paste). Handles X/Twitter threads, LinkedIn posts, blog
+  posts,
+
+  and more. Logs everything for retrospective analysis.
+
+  For auto-posting, the user needs the Claude for Chrome extension installed.
+
+  Without it, the skill falls back to COPY mode automatically.
+
+  Use when: "publish this", "format for twitter", "post to X", "ship this
+  content",
+
+  "format for blog", "send this email", "ready to publish", "auto-post",
+
+  "post this to X", "publish to LinkedIn".
+
+  Proactively invoke when the user has content in content/ and says they want to
+  ship it.

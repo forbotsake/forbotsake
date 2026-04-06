@@ -1,0 +1,20 @@
+name: forbotsake-create
+description: >-
+  Writes actual marketing content -- X threads, blog posts, emails, LinkedIn
+  posts, and more.
+
+  Reads your strategy.md and content-calendar.md, asks what piece to create,
+  then generates
+
+  channel-tailored content using your positioning, ICP, and messaging pillars.
+
+  Use when: "write a thread", "create content", "write a blog post", "draft an
+  email",
+
+  "LinkedIn post", "write marketing copy", "create a tweet", "help me write",
+  "content piece".
+
+  Proactively invoke when the user asks to write or draft any marketing content
+  and a
+
+  strategy.md exists.

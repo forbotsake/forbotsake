@@ -40,6 +40,9 @@ _UPD=""
 [ -n "$_UPD" ] && echo "$_UPD" || true
 _BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 echo "BRANCH: $_BRANCH"
+```
+
+```bash
 
 # Check for strategy.md
 if [ -f strategy.md ]; then

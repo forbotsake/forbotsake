@@ -1,0 +1,23 @@
+name: forbotsake-sharpen
+description: >-
+  Stage 4.5: SHARPEN. Takes a specific outreach target (person or organization)
+  and
+
+  produces a deep execution plan with contextual research, relationship mapping,
+
+  angle selection, and a multi-touch sequence. Reads your founder profile and
+  strategy
+
+  to leverage warm paths and unfair advantages.
+
+  Use when: "refine this plan", "go deeper on this", "sharpen execution",
+
+  "how do I approach [person]", "outreach to [person]", "target [person/org]",
+
+  "approach [person]", "engage [org]".
+
+  Proactively invoke when the user mentions approaching a specific person or
+
+  organization as part of their marketing strategy.
+
+  Requires: strategy.md (from /forbotsake-marketing-start).

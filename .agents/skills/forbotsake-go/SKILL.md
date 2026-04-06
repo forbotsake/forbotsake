@@ -1,0 +1,426 @@
+---
+name: forbotsake-go
+description: >
+  One command, zero to published. Detects your marketing pipeline state and runs
+
+  remaining stages automatically. If you have nothing, it starts from strategy.
+
+  If you have strategy, it creates content. If you have content, it reviews and
+  ships.
+
+  Use when: "do marketing", "market this", "forbotsake-go", "I need to do
+  marketing",
+
+  "help me publish", "one-click marketing", "run the pipeline".
+
+  Proactively invoke when the user expresses intent to do marketing but hasn't
+
+  specified which forbotsake skill to use.
+---
+
+# /forbotsake-go
+
+One command. Zero to published.
+
+## Preamble
+
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+mkdir -p "$FORBOTSAKE_HOME"
+
+# Discover forbotsake install directory
+_FBS_ROOT=""
+for _FBS_CANDIDATE in "$HOME/.codex/skills/forbotsake" "$HOME/.agents/skills/forbotsake"; do
+  [ -d "$_FBS_CANDIDATE" ] && _FBS_ROOT="$_FBS_CANDIDATE" && break
+done
+if [ -z "$_FBS_ROOT" ]; then
+  echo "WARNING: forbotsake not found. Install: bash <(curl -fsSL https://raw.githubusercontent.com/forbotsake/forbotsake/main/bin/install.sh)"
+fi
+
+# Check for updates
+_UPD=""
+[ -n "$_FBS_ROOT" ] && [ -x "$_FBS_ROOT/bin/forbotsake-update-check" ] && _UPD=$("$_FBS_ROOT/bin/forbotsake-update-check" 2>/dev/null || true)
+[ -n "$_UPD" ] && echo "$_UPD" || true
+_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+echo "BRANCH: $_BRANCH"
+```
+
+```bash
+
+# Set orchestrated mode for sub-skills via file flag (env vars don't propagate across Skill tool invocations)
+_ORCH_FLAG="$FORBOTSAKE_HOME/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+
+# Recursion guard: check if already orchestrated before overwriting
+if [ -f "$_ORCH_FLAG" ] && [ "$(cat "$_ORCH_FLAG" 2>/dev/null)" = "1" ]; then
+  echo "RECURSION_DETECTED: yes"
+  echo "ORCH_FLAG: $_ORCH_FLAG"
+else
+  # Check for stale flag (older than 2 hours = likely crashed session)
+  if [ -f "$_ORCH_FLAG" ]; then
+    _FLAG_AGE=$(( ($(date +%s) - $(stat -f %m "$_ORCH_FLAG" 2>/dev/null || echo 0)) / 3600 ))
+    if [ "${_FLAG_AGE:-0}" -gt 2 ]; then
+      echo "STALE_FLAG: yes (${_FLAG_AGE}h old, removing)"
+      rm -f "$_ORCH_FLAG"
+    fi
+  fi
+  echo "1" > "$_ORCH_FLAG"
+  echo "ORCHESTRATED: 1"
+  echo "ORCH_FLAG: $_ORCH_FLAG"
+fi
+
+# Tick mode detection (file-based, set by bin/forbotsake-cron)
+# Use path hash to match bin/forbotsake-cron's naming (avoids basename collisions)
+_PROJECT_HASH=$(echo "$(git rev-parse --show-toplevel 2>/dev/null || pwd)" | md5 2>/dev/null | cut -c1-8 || basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
+_TICK_FLAG="$FORBOTSAKE_HOME/tick-$_PROJECT_HASH"
+if [ -f "$_TICK_FLAG" ]; then
+  FORBOTSAKE_TICK=1
+  TICK_CONTENT_FILE=$(cat "$_TICK_FLAG")
+  echo "TICK_MODE: 1"
+  echo "TICK_FILE: $TICK_CONTENT_FILE"
+else
+  FORBOTSAKE_TICK=0
+  echo "TICK_MODE: 0"
+fi
+
+# Fast mode propagation (skip adversarial gates)
+# Env vars don't propagate across Skill tool invocations, so use file flag (same pattern as orchestrated mode)
+FORBOTSAKE_FAST="${FORBOTSAKE_FAST:-0}"
+_FAST_FLAG="$FORBOTSAKE_HOME/fast-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+if [ "$FORBOTSAKE_FAST" = "1" ]; then
+  echo "1" > "$_FAST_FLAG"
+  echo "NOTE: Fast mode active. Adversarial review gates will be skipped."
+elif [ -f "$_FAST_FLAG" ]; then
+  FORBOTSAKE_FAST=$(cat "$_FAST_FLAG" 2>/dev/null || echo 0)
+fi
+echo "FAST_MODE: $FORBOTSAKE_FAST"
+echo "FAST_FLAG: $_FAST_FLAG"
+
+# Pipeline state detection
+echo "--- PIPELINE STATE ---"
+
+# Strategy
+if [ -f strategy.md ]; then
+  echo "STRATEGY: exists"
+  # Check if it has real content (not just a template)
+  STRATEGY_LINES=$(wc -l < strategy.md 2>/dev/null | tr -d ' ')
+  echo "STRATEGY_LINES: $STRATEGY_LINES"
+elif [ -f forbotsake-strategy.md ]; then
+  echo "STRATEGY: exists (forbotsake-strategy.md)"
+  STRATEGY_LINES=$(wc -l < forbotsake-strategy.md 2>/dev/null | tr -d ' ')
+  echo "STRATEGY_LINES: $STRATEGY_LINES"
+else
+  echo "STRATEGY: missing"
+fi
+
+# Content
+if [ -d content ] && ls content/*.md 1>/dev/null 2>&1; then
+  echo "CONTENT: exists"
+  CONTENT_COUNT=$(ls -1 content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  echo "CONTENT_COUNT: $CONTENT_COUNT"
+  # Check review status via frontmatter
+  DRAFT_COUNT=$(grep -l -e 'status: draft' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  HARD_FAILED_COUNT=$(grep -l -e 'status: hard-failed' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  REVIEWED_COUNT=$(grep -l -e 'status: reviewed' -e 'status: revised' -e 'status: reviewed-override' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  PUBLISHED_COUNT=$(grep -l -e 'status: published' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  POSTING_COUNT=$(grep -l -e 'status: posting' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  FAILED_COUNT=$(grep -l -e 'status: failed' content/*.md 2>/dev/null | wc -l | tr -d ' ')
+  echo "POSTING_COUNT: $POSTING_COUNT"
+  echo "FAILED_COUNT: $FAILED_COUNT"
+  echo "DRAFT_COUNT: $DRAFT_COUNT"
+  echo "HARD_FAILED_COUNT: $HARD_FAILED_COUNT"
+  echo "REVIEWED_COUNT: $REVIEWED_COUNT"
+  ls -1t content/*.md 2>/dev/null | head -5
+else
+  echo "CONTENT: missing"
+fi
+
+# Content calendar
+[ -f content-calendar.md ] && echo "CALENDAR: exists" || echo "CALENDAR: missing"
+
+# Published log
+if [ -f published-log.md ]; then
+  echo "PUBLISHED_LOG: exists"
+  # Check what's been published
+  PUBLISHED_FILES=$(grep -c 'Source file:' published-log.md 2>/dev/null || echo 0)
+  echo "PUBLISHED_COUNT: $PUBLISHED_FILES"
+else
+  echo "PUBLISHED_LOG: missing"
+fi
+
+# Multi-modal: check brand.md and media-providers.md
+[ -f brand.md ] && echo "BRAND: exists" || echo "BRAND: missing"
+if [ -f media-providers.md ]; then
+  echo "MEDIA_PROVIDERS: exists"
+else
+  echo "MEDIA_PROVIDERS: missing"
+  # Auto-detect available providers
+  echo "--- PROVIDER DETECTION ---"
+  command -v bun >/dev/null 2>&1 && echo "SATORI: yes (bun)" || { command -v node >/dev/null 2>&1 && echo "SATORI: yes (node)" || echo "SATORI: no"; }
+  echo "CHROME_MCP: check-at-runtime"
+  [ -n "${NANO_BANANA_API_KEY:-}" ] && echo "NANO_BANANA: yes" || echo "NANO_BANANA: no"
+  [ -n "${SEEDANCE_API_KEY:-}" ] && echo "SEEDANCE: yes" || echo "SEEDANCE: no"
+  echo "--- END DETECTION ---"
+fi
+
+# State file for resume
+_STATE_FILE="$FORBOTSAKE_HOME/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
+if [ -f "$_STATE_FILE" ]; then
+  echo "RESUME: available"
+  echo "STATE_FILE: $_STATE_FILE"
+  cat "$_STATE_FILE"
+else
+  echo "RESUME: none"
+fi
+
+echo "--- END PIPELINE STATE ---"
+```
+
+**Recursion guard:** If `RECURSION_DETECTED` is `yes`, this skill is being invoked recursively (the flag was already set by a parent forbotsake-go). Say: "forbotsake-go is already running. Skipping to avoid recursion." Then stop.
+
+**Stale flag:** If `STALE_FLAG` is `yes`, a previous run crashed without cleanup. The flag was removed. Proceed normally.
+
+If preamble shows `UPGRADE_AVAILABLE <old> <new>`: read `$_FBS_ROOT/forbotsake-upgrade/SKILL.md`
+and follow the "Inline upgrade flow" section Step 1 only. If upgrade proceeds, continue after.
+If declined, continue with this skill immediately.
+
+If `JUST_UPGRADED <old> <new>`: "Running forbotsake v{new} (just updated!)." Continue.
+
+## Tick Mode (autonomous cron posting)
+
+If `TICK_MODE` is `1`, this is an autonomous cron invocation. Hard constraints apply:
+
+1. **Stage 5 ONLY.** Do not run Stages 1-4 (strategy, create, review). Tick mode is exclusively for publishing already-reviewed content.
+2. Read `TICK_FILE` to get the content file path.
+3. Read the content file. Verify its frontmatter has `status: reviewed`, `status: revised`, or `status: reviewed-override`. If not, log "Content file {path} has status {actual}, expected reviewed. Skipping." and exit.
+4. Set the content file frontmatter to `status: posting` (atomic claim to prevent double-posts).
+5. Read and follow the skill file for `/forbotsake-publish` in orchestrated mode for that single file. Pass the file path explicitly in the prompt, do NOT rely on status-based auto-selection (the file is now in `posting` status, not `reviewed`).
+6. On success: set `status: published` in the content file frontmatter.
+7. On failure: set `status: failed` in the content file frontmatter. Write a failure receipt to `published-log.md`.
+8. Clean up: remove the tick flag file. Remove the orchestrated flag file.
+9. Exit. Do not show "Next Steps" or suggest other skills.
+
+**Important:** In tick mode, skip Phase 1, Phase 2 Stages 1-4, Phase 3, and all interactive prompts. Go directly to Stage 5 (publish) for the single specified file.
+
+If the tick flag file does not contain a valid content file path, log the error and exit.
+
+**Recovery for stuck `posting` status:** If `POSTING_COUNT` > 0 in the preamble output, check each file with `status: posting`. If the file's modification time is older than 2 hours (use `stat -f %m` on macOS), reset it to `status: failed` and log: "Recovered stuck posting file {path}, set to failed." This prevents token drain from repeatedly launching Claude for a file that will never pass the status check.
+
+**Headless safety guard:** If `TICK_MODE` is `0` BUT the `claude -p` prompt text contains "tick mode" or "tick flag" (indicating the caller expected tick mode), log "WARN: Tick mode requested but flag file not found. Exiting to prevent uncontrolled pipeline run." and exit. Do not fall through to the interactive flow.
+
+If `TICK_MODE` is `0` and no tick-mode language is in the prompt, continue with normal interactive/orchestrated flow below.
+
+## Phase 1: Determine Starting Point
+
+Based on the pipeline state, determine which stage to start from:
+
+```
+IF RESUME is available:
+  → Read state file, resume from last completed stage
+IF STRATEGY is missing:
+  → Start at STAGE 1 (strategy)
+ELIF CONTENT is missing:
+  → Start at STAGE 3 (create)
+ELIF HARD_FAILED_COUNT > 0 AND DRAFT_COUNT = 0 AND REVIEWED_COUNT = 0 (only hard-failed content, nothing else to process):
+  → Tell user: "{HARD_FAILED_COUNT} content file(s) failed adversarial review.
+    Run /forbotsake-create to rewrite, or /forbotsake-content-check to override."
+  → Clean up flags before stopping:
+    ```bash
+    rm -f "$_ORCH_FLAG" "$_FAST_FLAG" 2>/dev/null
+    ```
+  → Stop. Do not proceed to publish with only hard-failed content.
+ELIF HARD_FAILED_COUNT > 0 AND (DRAFT_COUNT > 0 OR REVIEWED_COUNT > 0):
+  → Warn: "{HARD_FAILED_COUNT} file(s) are hard-failed (will be skipped). Processing remaining content."
+  → Continue with drafts/reviewed content. Do not block the entire pipeline for unrelated files.
+ELIF DRAFT_COUNT > 0 (unreviewed content exists):
+  → Start at STAGE 4 (review)
+ELIF REVIEWED_COUNT > 0 (reviewed but not published):
+  → Start at STAGE 5 (publish + ship)
+ELSE:
+  → Everything is done. Suggest: "All content is published. Run /forbotsake-retro to measure results, or /forbotsake-create for new content."
+```
+
+Tell the user briefly where you're starting:
+- "No strategy yet. Let's figure out your positioning first."
+- "Found your strategy. Creating content..."
+- "Found draft content. Reviewing it..."
+- "Content is reviewed. Shipping it."
+
+Do NOT show pipeline scores, percentages, or technical details. Just the status in plain language.
+
+## Phase 2: Run Stages
+
+Execute remaining stages in order. Between each stage, write the state file for crash recovery.
+
+### STAGE 1: Strategy (if needed)
+
+Read and follow the skill file for `/forbotsake-marketing-start` by reading its SKILL.md and following its instructions.
+
+The skill will run in orchestrated mode (FORBOTSAKE_ORCHESTRATED=1):
+- If strategy.md already exists, it will skip and return immediately
+- If not, it will ask the 5 strategy questions (these require human input)
+- It will write strategy.md and return
+
+After it returns, save state:
+```bash
+_STATE_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
+echo "stage: strategy-complete" > "$_STATE_FILE"
+echo "timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$_STATE_FILE"
+```
+
+Brief transition: "Strategy done. Now let's create some content."
+
+### STAGE 1.5: Media Providers Setup (if needed)
+
+If `MEDIA_PROVIDERS` is `missing`, auto-generate `media-providers.md` based on detected capabilities:
+
+Read the provider framework:
+```bash
+_SKILL_DIR=$(dirname "$(find $HOME/.codex/skills -path "*/forbotsake-go/SKILL.md" -type f 2>/dev/null | head -1)")
+_FBS_ROOT=$(cd "${_SKILL_DIR}/.." 2>/dev/null && pwd || true)
+echo "FBS_ROOT: $_FBS_ROOT"
+```
+Read `$_FBS_ROOT/knowledge/frameworks/media-providers.md` for the schema.
+
+Write `media-providers.md` with providers enabled/disabled based on preamble detection:
+- `local-satori`: enabled if bun or node detected
+- `gemini-browser`: enabled if Chrome MCP tools available (test at runtime)
+- `nano-banana-api`: enabled if NANO_BANANA_API_KEY env var set
+- `veo-browser`: disabled by default (video provider)
+- `seedance-api`: enabled if SEEDANCE_API_KEY env var set
+
+Brief: "Set up media providers for visual generation. {N} providers detected."
+
+If `BRAND` is `missing` and `STRATEGY` exists: Note that brand.md is missing. forbotsake-create will work without it using default styles, but recommend running `/forbotsake-marketing-start` interactively to set up brand identity for consistent visuals.
+
+### STAGE 2: Content Calendar (skip — optional)
+
+Do NOT run forbotsake-content-plan. It's optional and adds friction. The orchestrator
+should get to published content as fast as possible. If no calendar exists, forbotsake-create
+will work without one.
+
+### STAGE 3: Create Content (if needed)
+
+Read and follow the skill file for `/forbotsake-create` by reading its SKILL.md and following its instructions.
+
+The skill will run in orchestrated mode:
+- Auto-selects channel and topic from calendar or strategy
+- Still shows the draft for user approval (this is the high-value interaction)
+- Writes to content/ and returns
+
+After it returns, save state:
+```bash
+_STATE_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
+echo "stage: create-complete" > "$_STATE_FILE"
+echo "timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$_STATE_FILE"
+echo "content_files: $(ls -1t content/*.md 2>/dev/null | head -3 | tr '\n' ',')" >> "$_STATE_FILE"
+```
+
+Brief transition: "Content created. Checking quality..."
+
+### STAGE 4: Review Content (if needed)
+
+Read and follow the skill file for `/forbotsake-content-check` by reading its SKILL.md and following its instructions.
+
+The skill will run in orchestrated mode:
+- Auto-selects draft content files
+- Runs the 7-dimension review
+- Auto-applies fixes if any dimensions fail
+- Updates frontmatter status and returns
+
+After it returns, save state:
+```bash
+_STATE_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
+echo "stage: review-complete" > "$_STATE_FILE"
+echo "timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$_STATE_FILE"
+```
+
+Brief transition: "Content reviewed. Formatting for publishing..."
+
+### STAGE 5: Publish + Ship
+
+**5A: Format for platform**
+
+Read and follow the skill file for `/forbotsake-publish` by reading its SKILL.md and following its instructions.
+
+The skill will run in orchestrated mode:
+- Auto-selects reviewed content and target platform
+- Formats and logs to published-log.md
+- Returns with formatted content
+
+**5B: Git workflow (inline — no sub-skill needed)**
+
+After publish completes:
+
+```bash
+# Stage marketing files (only .md files from content/, not binaries or other artifacts)
+git add strategy.md content/*.md published-log.md content-calendar.md brand.md media-providers.md 2>/dev/null
+git add forbotsake-strategy.md forbotsake-content-calendar.md 2>/dev/null
+# Stage visual assets alongside content
+git add content/*-visual-*.png content/*-video-*.mp4 2>/dev/null
+
+# Check if there are changes to commit
+if ! git diff --cached --quiet 2>/dev/null; then
+  echo "STAGED_CHANGES: yes"
+else
+  echo "STAGED_CHANGES: no"
+fi
+
+_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+echo "GIT_BRANCH: $_BRANCH"
+```
+
+If `STAGED_CHANGES` is `yes`:
+- Generate commit message: `marketing: [brief description of content created]`
+- Commit using heredoc for safe quoting: `git commit -m "$(cat <<'EOF'\nmarketing: [description]\nEOF\n)"`
+- Push: `git push` (if remote exists)
+- If push fails: "Committed locally. Push when ready: `git push`"
+- If `GIT_BRANCH` is NOT `main` and NOT `master`: `gh pr create --fill --draft 2>/dev/null || true` (silently, don't block if fails or PR already exists)
+
+If no changes: skip git steps silently.
+
+After git, save state:
+```bash
+_STATE_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
+echo "stage: shipped" > "$_STATE_FILE"
+echo "timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$_STATE_FILE"
+```
+
+## Phase 3: Done
+
+Show the founder three things:
+
+1. **What was created:** List content files written
+2. **Copy-paste content:** The platform-formatted content (already displayed by forbotsake-publish)
+3. **Git status:** "Committed and pushed to {branch}." (or "Committed locally.")
+
+Then:
+
+> "That's it. Your content is ready to post.
+>
+> Run `/forbotsake-retro` next week to see what worked."
+
+Clean up state file and orchestrated flag:
+```bash
+_STATE_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/go-state-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)").md"
+_ORCH_FLAG="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+_FAST_FLAG="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/fast-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+rm -f "$_STATE_FILE" "$_ORCH_FLAG" "$_FAST_FLAG" 2>/dev/null
+```
+
+## Dry Run Mode
+
+If the user says `--dry-run` or "what would you do":
+
+Run Phase 1 (pipeline detection) only. Show:
+- Current pipeline state
+- Which stages would run
+- Estimated time
+
+Do NOT invoke any sub-skills.
+
+## Error Handling
+
+- **Sub-skill fails or user cancels mid-stage:** Save state file with last completed stage. Tell user: "Saved progress. Run `/forbotsake-go` again to continue from where you left off."
+- **Context window running low:** Save state file. Tell user: "Session getting long. Run `/forbotsake-go` again to continue — I'll pick up where we left off."
+- **No git remote:** Skip push silently. Content is still created and formatted.
+- **Strategy questions take too long:** State file saves after strategy is written. If session ends during questions, the resume file from forbotsake-marketing-start handles it.

@@ -1,0 +1,6 @@
+name: forbotsake-upgrade
+description: |-
+  Upgrade forbotsake to the latest version. Detects install type (git clone
+  vs vendored), runs the upgrade, and shows what's new.
+  Use when: "upgrade forbotsake", "update forbotsake", "get latest version",
+  "forbotsake update".

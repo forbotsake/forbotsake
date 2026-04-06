@@ -1,0 +1,21 @@
+name: forbotsake-cmo-check
+description: >-
+  Stage 2: CHALLENGE. Reads your strategy.md and ruthlessly evaluates it section
+  by
+
+  section. Rates positioning, ICP, channels, and messaging as
+  weak/adequate/strong.
+
+  Forces you to consider 2 alternative approaches you haven't explored. Scores
+  overall
+
+  readiness and suggests specific revisions.
+
+  Use when: "review my strategy", "is my strategy good", "challenge my
+  marketing",
+
+  "CMO review", "strategy check", "poke holes in my plan", "what am I missing".
+
+  Proactively invoke when the user has a strategy.md and asks for feedback or
+
+  wants to improve their marketing approach.

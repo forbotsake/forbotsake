@@ -1,0 +1,3 @@
+# Mark Codex-generated SKILL.md files as generated (collapse in diffs)
+.agents/skills/*/SKILL.md linguist-generated=true
+.agents/skills/*/openai.yaml linguist-generated=true

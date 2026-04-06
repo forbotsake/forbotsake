@@ -19,12 +19,13 @@ REPO_URL="https://github.com/forbotsake/forbotsake.git"
 CLEAN_MODE=false
 EXPLICIT_HOSTS=""
 
-for arg in "$@"; do
-  case "$arg" in
+while [ $# -gt 0 ]; do
+  case "$1" in
     --clean) CLEAN_MODE=true ;;
     --hosts) shift; EXPLICIT_HOSTS="${1:-}" ;;
-    --hosts=*) EXPLICIT_HOSTS="${arg#--hosts=}" ;;
+    --hosts=*) EXPLICIT_HOSTS="${1#--hosts=}" ;;
   esac
+  shift
 done
 
 # --- Clean mode ---

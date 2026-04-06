@@ -1,0 +1,23 @@
+name: forbotsake-content-check
+description: >-
+  Reviews your marketing content against your strategy before publishing. Checks
+  brand voice
+
+  consistency, messaging alignment, channel format fit, CTA clarity, and length.
+  Rates each
+
+  dimension pass/fail with specific feedback and gives an overall READY TO
+  PUBLISH or
+
+  NEEDS REVISION verdict.
+
+  Use when: "review my content", "check this post", "is this ready to publish",
+  "content review",
+
+  "check my thread", "review before posting", "does this match my brand",
+  "content check".
+
+  Proactively invoke when the user has written content and is about to publish,
+  or when
+
+  /forbotsake-create suggests running this as a next step.

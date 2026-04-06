@@ -1,0 +1,17 @@
+name: forbotsake-go
+description: >-
+  One command, zero to published. Detects your marketing pipeline state and runs
+
+  remaining stages automatically. If you have nothing, it starts from strategy.
+
+  If you have strategy, it creates content. If you have content, it reviews and
+  ships.
+
+  Use when: "do marketing", "market this", "forbotsake-go", "I need to do
+  marketing",
+
+  "help me publish", "one-click marketing", "run the pipeline".
+
+  Proactively invoke when the user expresses intent to do marketing but hasn't
+
+  specified which forbotsake skill to use.

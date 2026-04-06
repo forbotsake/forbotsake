@@ -1,0 +1,20 @@
+name: forbotsake-content-plan
+description: >-
+  Turns your marketing strategy into an executable content calendar. Reads
+  strategy.md,
+
+  asks about your capacity (hours/week), then produces content-calendar.md with
+  weekly
+
+  themes, channel-specific content types, cadence, and format templates for 4
+  weeks.
+
+  Use when: "content calendar", "what should I post", "content plan", "how often
+  should I post",
+
+  "weekly content", "marketing calendar", "what to write", "content cadence".
+
+  Proactively invoke when the user has a strategy.md and asks about what content
+  to create
+
+  or how to organize their marketing output.

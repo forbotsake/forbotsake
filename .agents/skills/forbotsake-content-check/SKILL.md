@@ -1,0 +1,504 @@
+---
+name: forbotsake-content-check
+description: >
+  Reviews your marketing content against your strategy before publishing. Checks
+  brand voice
+
+  consistency, messaging alignment, channel format fit, CTA clarity, and length.
+  Rates each
+
+  dimension pass/fail with specific feedback and gives an overall READY TO
+  PUBLISH or
+
+  NEEDS REVISION verdict.
+
+  Use when: "review my content", "check this post", "is this ready to publish",
+  "content review",
+
+  "check my thread", "review before posting", "does this match my brand",
+  "content check".
+
+  Proactively invoke when the user has written content and is about to publish,
+  or when
+
+  /forbotsake-create suggests running this as a next step.
+---
+
+# /forbotsake-content-check
+
+The gate between "written" and "published." Catches messaging drift, weak CTAs,
+and channel misfits before your audience sees them.
+
+## Preamble
+
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+mkdir -p "$FORBOTSAKE_HOME"
+
+# Discover forbotsake install directory
+_FBS_ROOT=""
+for _FBS_CANDIDATE in "$HOME/.codex/skills/forbotsake" "$HOME/.agents/skills/forbotsake"; do
+  [ -d "$_FBS_CANDIDATE" ] && _FBS_ROOT="$_FBS_CANDIDATE" && break
+done
+if [ -z "$_FBS_ROOT" ]; then
+  echo "WARNING: forbotsake not found. Install: bash <(curl -fsSL https://raw.githubusercontent.com/forbotsake/forbotsake/main/bin/install.sh)"
+fi
+
+# Check for updates
+_UPD=""
+[ -n "$_FBS_ROOT" ] && [ -x "$_FBS_ROOT/bin/forbotsake-update-check" ] && _UPD=$("$_FBS_ROOT/bin/forbotsake-update-check" 2>/dev/null || true)
+[ -n "$_UPD" ] && echo "$_UPD" || true
+_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+echo "BRANCH: $_BRANCH"
+```
+
+```bash
+
+# Orchestrated mode (invoked by forbotsake-go, propagated via file flag)
+_ORCH_FILE="${FORBOTSAKE_HOME:-$HOME/.forbotsake}/orchestrated-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+FORBOTSAKE_ORCHESTRATED=$(cat "$_ORCH_FILE" 2>/dev/null || echo 0)
+echo "ORCHESTRATED: $FORBOTSAKE_ORCHESTRATED"
+
+# Fast mode (skip adversarial gates)
+# Read from env var OR file flag (file flag set by forbotsake-go for pipeline propagation)
+_FAST_FLAG="$FORBOTSAKE_HOME/fast-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+FORBOTSAKE_FAST="${FORBOTSAKE_FAST:-0}"
+[ "$FORBOTSAKE_FAST" = "0" ] && [ -f "$_FAST_FLAG" ] && FORBOTSAKE_FAST=$(cat "$_FAST_FLAG" 2>/dev/null || echo 0)
+echo "FAST_MODE: $FORBOTSAKE_FAST"
+
+# Check for strategy.md
+if [ -f strategy.md ]; then
+  echo "STRATEGY_EXISTS: yes"
+  echo "STRATEGY_FILE: strategy.md"
+elif [ -f forbotsake-strategy.md ]; then
+  echo "STRATEGY_EXISTS: yes"
+  echo "STRATEGY_FILE: forbotsake-strategy.md"
+else
+  echo "STRATEGY_EXISTS: no"
+fi
+
+# Check for content directory and list recent files
+if [ -d content ]; then
+  echo "CONTENT_DIR: exists"
+  echo "RECENT_CONTENT:"
+  ls -1t content/*.md 2>/dev/null | head -10
+  echo "LATEST_FILE: $(ls -1t content/*.md 2>/dev/null | head -1)"
+else
+  echo "CONTENT_DIR: missing"
+fi
+```
+
+If output shows `UPGRADE_AVAILABLE <old> <new>`: read the forbotsake-upgrade SKILL.md
+at `$_FBS_ROOT/forbotsake-upgrade/SKILL.md` (where `_FBS_ROOT` is the variable already
+resolved in the preamble bash above) and follow the "Inline upgrade flow" section **Step 1
+only**. If Step 1 results in "Yes" or "Always" (proceed with upgrade), continue through
+Steps 2-7 of the inline flow. If Step 1 results in "Not now" or "Never" (declined),
+skip Steps 2-7 entirely and continue with this skill immediately.
+
+If output shows `JUST_UPGRADED <old> <new>`: tell user
+"Running forbotsake v{new} (just updated from v{old})!" and continue.
+
+If `STRATEGY_EXISTS` is `no`:
+
+> "No strategy.md found. I can still review content for general quality, but I can't
+> check it against your brand voice, ICP, or messaging pillars without a strategy.
+>
+> Want to proceed with a general review, or run `/forbotsake-marketing-start` first?"
+
+Ask the user directly in conversation with options: A) General review (no strategy checks), B) I'll create a strategy first.
+
+If option B, stop here.
+
+If `CONTENT_DIR` is `missing`:
+
+> "No content/ directory found. What file do you want me to review?
+> Paste the path or the content directly."
+
+Ask the user directly in conversation.
+
+## Phase 1: Select the Content to Review
+
+**Orchestrated mode (`ORCHESTRATED` is `1`):**
+- Auto-select the most recently created content file with `status: draft` in frontmatter. Review ONE file at a time (the skill's review flow is designed for single-file review). If multiple drafts exist, review only the newest one.
+- If no draft files, review the most recently modified content file
+- Skip the file selection direct conversation with the user
+- In Phase 4: if all dimensions pass, proceed silently. If any fail, auto-apply suggested fixes (equivalent to option A) and re-run. If re-review still fails after 2 iterations, mark as `reviewed-override` and continue.
+- Skip Phase 6 (Next Steps) — the orchestrator handles what's next.
+
+**Interactive mode (`ORCHESTRATED` is `0`):**
+
+If content files exist, ask via direct conversation with the user:
+
+> "Which content piece should I review?
+>
+> **Recent files:**
+> {numbered list of files from RECENT_CONTENT, showing filename and frontmatter channel/topic}
+>
+> Pick a number, paste a file path, or paste raw content directly."
+
+If only one file exists in content/, default to it:
+
+> "Found one content file: `{filename}`. Reviewing that one. Say 'no' if you meant something else."
+
+Read the selected content file completely. Extract from its frontmatter:
+- `channel` -- which platform this is for
+- `messaging_pillar` -- which pillar it supports
+- `topic` -- what it's about
+- `status` -- current status
+
+## Phase 2: Load the Review Criteria
+
+Read `strategy.md` completely. Extract:
+
+1. **Positioning statement** -- the reference frame for all content
+2. **ICP** -- person, title, pain, language they use
+3. **Messaging pillars** -- the 3 claims, each with proof points
+4. **Channel strategy** -- the channel's score and rationale
+5. **Brand voice** -- if explicitly defined; otherwise infer from the positioning and ICP:
+   - Technical ICP = direct, precise, no fluff
+   - Business ICP = outcome-focused, professional but not corporate
+   - Creative ICP = conversational, personality-driven
+   - Developer ICP = show-don't-tell, code examples over claims
+
+## Phase 2.5: Content Red Team (Adversarial Review)
+
+**Skip this phase if `FAST_MODE` is `1`.** Print: "FORBOTSAKE_FAST=1: skipping adversarial review."
+
+This is an independent adversarial review of the content by a fresh-context subagent.
+The reviewer has NOT seen your conversation or the scorecard dimensions. It sees only
+the content draft, strategy.md, and the banned patterns list.
+
+### Step 1: Load banned patterns
+
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+_SKILL_DIR=$(dirname "$(find $HOME/.codex/skills -path "*/forbotsake-marketing-start/SKILL.md" -type f 2>/dev/null | head -1)" 2>/dev/null)
+_FBS_ROOT=$(cd "${_SKILL_DIR}/.." 2>/dev/null && pwd || true)
+
+# Load default patterns
+_DEFAULTS=""
+[ -n "$_FBS_ROOT" ] && [ -f "$_FBS_ROOT/knowledge/banned-patterns-defaults.md" ] && _DEFAULTS="$_FBS_ROOT/knowledge/banned-patterns-defaults.md"
+echo "BANNED_DEFAULTS: ${_DEFAULTS:-not_found}"
+
+# Load user patterns
+_USER_PATTERNS="$FORBOTSAKE_HOME/banned-patterns.md"
+[ -f "$_USER_PATTERNS" ] && echo "USER_PATTERNS: $_USER_PATTERNS" || echo "USER_PATTERNS: none"
+```
+
+### Step 2: Dispatch the reviewer
+
+Run the review inline to spawn an independent reviewer subagent. The subagent prompt
+must contain ONLY:
+- The content file path to review
+- The strategy.md file path (for alignment checking)
+- The banned patterns file path(s)
+- The 6 review dimensions
+- The JSON output contract
+
+**Subagent prompt:**
+
+> You are a content red team reviewer. Your job is to REJECT bad content, not approve good content.
+>
+> Read these files:
+> 1. {content file path} -- the content to review
+> 2. {strategy.md path} -- the strategy it should align with
+> 3. {banned patterns path(s)} -- patterns that signal AI-generated content
+>
+> Review the content on 6 dimensions:
+> 1. AI-SLOP DETECTION: Check for patterns from the banned patterns file. Count matches.
+> 2. VOICE AUTHENTICITY: Does this sound like a human wrote it, or like an AI? Check against brand voice in strategy.md.
+> 3. ICP SPECIFICITY: Would the target person from strategy.md actually engage with this, or scroll past?
+> 4. ORIGINALITY: Does this say something the ICP hasn't heard before, or is it generic advice anyone could write?
+> 5. STRATEGY ALIGNMENT: Does the content execute the positioning and messaging pillars from strategy.md?
+> 6. PUBLIC REPUTATION RISK: Would the founder be embarrassed if this went viral for the wrong reasons?
+>
+> Respond with ONLY valid JSON, no markdown fences, no explanation outside the JSON:
+> {"result": "PASS" | "SOFT_FAIL" | "HARD_FAIL", "findings": [{"dimension": "...", "verdict": "PASS" | "FAIL", "spans": ["quoted text from content"], "fix": "suggested replacement"}], "summary": "one-line overall assessment"}
+
+### Step 3: Parse and act on the result
+
+**Parse the subagent's response as JSON.**
+
+**Before parsing:** Strip markdown fences if present (remove leading ```json and trailing ``` lines). Then attempt JSON parse.
+
+If JSON parsing still fails after stripping fences:
+- Treat as PASS with warning: "Adversarial reviewer returned unparseable output. Proceeding to scorecard review (Phase 3 still checks quality)."
+- Log to metrics: `{"gate":"content","result":"PARSE_FAIL"}`
+- Continue to Phase 3 (the existing scorecard still runs as a backstop).
+
+If parsed successfully, act on the result:
+
+**PASS:** Print "Content Red Team: PASS. Proceeding to scorecard review." Continue to Phase 3.
+
+**SOFT_FAIL:** Present the findings to the user:
+
+> "**Content Red Team: SOFT_FAIL**
+>
+> An independent reviewer flagged these issues:
+> {for each finding with verdict FAIL:}
+> - **{dimension}:** "{spans}" ... suggested fix: "{fix}"
+>
+> This is iteration {N} of 2."
+
+- **Interactive mode:** Ask the user directly in conversation:
+  A) Apply fixes and re-review
+  B) Override and proceed to scorecard
+  C) I'll revise manually
+
+- **Orchestrated mode:** Auto-apply fixes, re-dispatch reviewer. Max 2 iterations total (hard counter). After 2 iterations, if still SOFT_FAIL, proceed to Phase 3 with concerns logged.
+
+If the user chooses A: apply fixes using Edit tool, re-dispatch the reviewer (Step 2). Max 2 total iterations. After 2, proceed to Phase 3 regardless.
+
+If the user chooses B: update content frontmatter with `reviewer_notes:` containing the findings. Log override. Continue to Phase 3.
+
+**HARD_FAIL:** The content needs a fundamental rewrite.
+
+> "**Content Red Team: HARD_FAIL**
+>
+> The independent reviewer says this content needs a fundamental rewrite:
+> {summary}
+>
+> Specific issues:
+> {for each finding with verdict FAIL:}
+> - **{dimension}:** "{spans}"
+>
+> **Next action:** Run `/forbotsake-create` again. The reviewer's notes will be available
+> as context to avoid the same issues."
+
+- Update content frontmatter: add `status: hard-failed` and `reviewer_notes: {JSON findings}`
+- **Interactive mode:** Ask the user directly in conversation:
+  A) I'll rewrite with /forbotsake-create
+  B) Override and proceed anyway (I disagree with the reviewer)
+- **Orchestrated mode:** Write `status: hard-failed` to frontmatter. Present user with explicit proceed/abort choice (this is the one gate that always requires user input, even in orchestrated mode).
+
+If override: set `status: reviewed-override`, log override reason, continue to Phase 3.
+
+### Step 4: Log metrics
+
+After the red team phase completes, log the result:
+
+```bash
+FORBOTSAKE_HOME="${FORBOTSAKE_HOME:-$HOME/.forbotsake}"
+mkdir -p "$FORBOTSAKE_HOME"
+echo '{"gate":"content","ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","result":"RESULT","content_file":"FILENAME","iterations":N,"override":BOOL}' >> "$FORBOTSAKE_HOME/review-metrics.jsonl" 2>/dev/null || true
+```
+
+Replace RESULT, FILENAME, N, BOOL with actual values.
+
+---
+
+## Phase 3: Run the Review
+
+Evaluate the content against these 7 dimensions. For each, give a **PASS** or **FAIL** with specific, actionable feedback. Not vague ("could be better") -- specific ("tweet 3 uses 'leverage' which your ICP wouldn't say; replace with 'use'").
+
+### Dimension 1: Brand Voice Consistency
+
+Does the content sound like it comes from the same person/brand as the strategy?
+
+Check for:
+- Tone match (formal vs casual, technical vs accessible)
+- Vocabulary alignment (does it use the ICP's words, not marketing jargon?)
+- Personality consistency (if strategy says "direct and no-BS" but content is hedging and passive)
+- First-person vs third-person consistency
+
+**PASS criteria:** A reader familiar with the brand would recognize this as on-brand.
+**FAIL example:** "Strategy says 'direct, technical, no fluff' but this post opens with 'In today's fast-paced world of innovation...'"
+
+### Dimension 2: Messaging Alignment
+
+Does the content reinforce at least one messaging pillar without contradicting the others?
+
+Check for:
+- Clear connection to a specific pillar
+- Claims that are supported by the pillar's proof points
+- No contradictions with positioning statement
+- No accidental repositioning (claiming to be something the strategy doesn't support)
+
+**PASS criteria:** You can point to the specific pillar this content supports.
+**FAIL example:** "Strategy positions you as the 'simple' alternative, but this post emphasizes 'powerful enterprise features.'"
+
+### Dimension 3: ICP Targeting
+
+Is this content written FOR the ICP, not for a generic audience?
+
+Check for:
+- Does it reference the ICP's specific pain point?
+- Would the ICP recognize their situation in this content?
+- Is it using language the ICP uses (not your internal terminology)?
+- Is the assumed knowledge level correct for the ICP?
+
+**PASS criteria:** The ICP from strategy.md would feel "this was written for me."
+**FAIL example:** "ICP is 'backend engineers at Series A startups' but this post reads like it's targeting CTOs at enterprises."
+
+### Dimension 4: Channel Format Fit
+
+Does the content respect the platform's conventions and constraints?
+
+Check per channel:
+- **X/Twitter thread:** Each tweet under 280 chars? Hook in tweet 1? Tweets stand alone? Thread length 3-10 tweets?
+- **X/Twitter single:** Under 280 chars? Punchy? One clear point?
+- **Blog:** Scannable headers? 1500+ words for SEO? Clear structure? Meta description?
+- **LinkedIn:** First 2 lines hook before fold? Under 1300 chars? No hashtag spam? Line breaks?
+- **Email:** Compelling subject line? Short paragraphs? Single CTA? Mobile-friendly length?
+- **Reddit:** Value-first? No overt self-promotion? Matches subreddit norms?
+- **Hacker News:** Zero marketing speak? Technical substance? Genuine?
+
+**PASS criteria:** The content would not look out of place on the target platform.
+**FAIL example:** "This X thread has 15 tweets -- that's too long. Most readers drop off after tweet 5-7."
+
+### Dimension 5: CTA Clarity
+
+Is there one clear call-to-action, and does it match the content's funnel position?
+
+Check for:
+- Single CTA (not competing asks)
+- CTA matches funnel stage: awareness content = soft CTA (follow, bookmark), consideration = medium CTA (try, sign up for beta), decision = hard CTA (buy, subscribe)
+- CTA is specific, not vague ("Try the free tier at {url}" not "check it out")
+- CTA placement (end of content, not buried in the middle)
+
+**PASS criteria:** A reader knows exactly what to do next and why.
+**FAIL example:** "CTA says 'sign up now' but this is an awareness-stage thread. Try 'follow for more' or 'bookmark this.'"
+
+### Dimension 6: Length Appropriateness
+
+Is the content the right length for its channel and purpose?
+
+Guidelines:
+- X thread: 3-10 tweets (sweet spot: 5-7)
+- X single tweet: 100-280 chars (sweet spot: 200-240)
+- Blog post: 1500-2500 words for SEO, 800-1200 for thought leadership
+- LinkedIn post: 500-1300 chars (sweet spot: 800-1000)
+- Email: 200-500 words for newsletters, 50-150 for transactional
+- Reddit: varies by subreddit, but substance over brevity
+
+**PASS criteria:** Length serves the content. Nothing feels padded or cut short.
+**FAIL example:** "This blog post is 600 words. For the SEO goal noted in your strategy, aim for 1500+."
+
+### Dimension 7: Hook Strength
+
+Would the first line/tweet/sentence make the ICP stop scrolling?
+
+Check for:
+- Opens with a specific, surprising, or relatable claim (not generic)
+- Creates curiosity or recognition ("that's me" feeling)
+- Avoids cliches ("In today's world...", "Have you ever...", "Let me tell you about...")
+- Front-loads value -- doesn't bury the lead
+
+**PASS criteria:** Reading only the first line, the ICP would want to read the second.
+**FAIL example:** "Opens with 'Excited to announce...' -- nobody stops scrolling for your excitement. Lead with the benefit."
+
+### Dimension 8: Visual Consistency (schema_version 2 only)
+
+If the content file has `schema_version: 2` and `visual_treatment` is not `none`, check:
+
+1. **Visual treatment appropriateness:** Does the chosen treatment (text-card/ai-image/video) fit the channel and content type? Flag mismatches:
+   - Product Hunt launch with `visual_treatment: none` → "Product Hunt posts need gallery images. Recommend ai-image."
+   - LinkedIn post with `visual_treatment: none` → "LinkedIn posts with images get 2x engagement. Consider text-card or ai-image."
+   - HN post with `visual_treatment: ai-image` → "Hacker News is text-focused. Visual adds no value here."
+
+2. **Visual prompt quality:** Does `visual_prompt` reference brand elements from brand.md?
+   - Check if prompt includes brand colors or style descriptors
+   - Check if prompt relates to the content's actual topic (not generic)
+
+3. **Visual asset existence:** If `visual_status` is `generated`, check that the visual file actually exists at the expected path.
+
+4. **Accessibility:** Does `visual_alt` provide a meaningful description? Not just "image" or empty — it should describe what's depicted for screen readers.
+
+5. **If visual file exists:** Use the Read tool to display the image to the user. Ask: "Does this image match your brand and content? Quick visual sanity check."
+
+**PASS criteria:** Visual treatment fits the channel, prompt references brand, asset exists, alt text is meaningful.
+**FAIL example:** "visual_treatment is ai-image but visual_status is 'failed'. No image file exists. Either regenerate or switch to text-card."
+
+## Phase 4: Deliver the Verdict
+
+Present the review as a scorecard:
+
+```
+## Content Review: {filename}
+
+| Dimension | Verdict | Notes |
+|-----------|---------|-------|
+| Brand Voice | PASS/FAIL | {one-line summary} |
+| Messaging Alignment | PASS/FAIL | {one-line summary} |
+| ICP Targeting | PASS/FAIL | {one-line summary} |
+| Channel Format | PASS/FAIL | {one-line summary} |
+| CTA Clarity | PASS/FAIL | {one-line summary} |
+| Length | PASS/FAIL | {one-line summary} |
+| Hook Strength | PASS/FAIL | {one-line summary} |
+| Visual Consistency | PASS/FAIL/N/A | {one-line summary} |
+
+**Overall: READY TO PUBLISH / NEEDS REVISION**
+```
+
+### If all 7 dimensions pass:
+
+> "**READY TO PUBLISH.** This content is on-brand, on-strategy, and channel-appropriate.
+>
+> Quick sanity checks before hitting post:
+> - Read it out loud one more time
+> - Verify all links work
+> - Double-check any specific numbers or claims
+>
+> When ready, use `/forbotsake-publish` to ship it."
+
+### If any dimension fails:
+
+Present the failures with specific edit suggestions. Not "make the hook better" -- provide an actual rewritten alternative.
+
+> "**NEEDS REVISION.** {N} of 7 dimensions failed. Here are the specific fixes:
+>
+> **{Failed Dimension 1}:**
+> Current: "{quote the problematic part}"
+> Problem: {why it fails}
+> Suggested fix: "{rewritten version}"
+>
+> **{Failed Dimension 2}:**
+> Current: "{quote the problematic part}"
+> Problem: {why it fails}
+> Suggested fix: "{rewritten version}"
+>
+> Want me to apply these fixes? Or do you want to revise manually?"
+
+Ask the user directly in conversation with options:
+A) Apply all suggested fixes
+B) Apply some fixes (tell me which)
+C) I'll revise manually
+D) Override -- publish as-is (I disagree with the review)
+
+If A or B: apply the edits to the content file using the Edit tool, then re-run the review on the updated version. Repeat until all dimensions pass or the user overrides.
+
+If D: update the content file's frontmatter status to `reviewed-override` and proceed.
+
+## Phase 5: Update Content Status
+
+After the review is complete (pass or override), update the content file's frontmatter:
+
+```bash
+# Update status in frontmatter
+```
+
+Use the Edit tool to change `status: draft` to:
+- `status: reviewed` if all dimensions passed
+- `status: reviewed-override` if the user chose to override failures
+- `status: revised` if edits were applied and the re-review passed
+
+## Phase 6: Next Steps
+
+**Orchestrated mode (`ORCHESTRATED` is `1`):** Skip this phase entirely. Confirm: "Review complete for `content/{filename}`. Status: {reviewed/revised/reviewed-override}." Then stop.
+
+**Interactive mode (`ORCHESTRATED` is `0`):** Tell the user:
+
+> "Review complete for `content/{filename}`.
+>
+> {If READY TO PUBLISH:}
+> **Next step:** Use `/forbotsake-publish` to ship it.
+>
+> {If NEEDS REVISION and user chose to revise manually:}
+> **Next step:** Edit the file, then run `/forbotsake-content-check` again.
+>
+> {If user wants to create more content:}
+> **Create more:** `/forbotsake-create` to write your next piece from the calendar.
+>
+> {If no content calendar exists:}
+> **Get organized:** `/forbotsake-content-plan` to build a content calendar
+> so you always know what to write next."

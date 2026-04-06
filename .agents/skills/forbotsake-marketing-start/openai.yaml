@@ -1,0 +1,19 @@
+name: forbotsake-marketing-start
+description: >-
+  The starting point for marketing your product. Reads your codebase to
+  understand
+
+  what you built, asks 5 hard questions about positioning, audience, and
+  channels,
+
+  then produces strategy.md with your marketing strategy and first concrete
+  move.
+
+  Use when: "how should I market this", "go-to-market", "GTM", "positioning",
+
+  "I don't know how to sell this", "help me market", "marketing strategy".
+
+  Proactively invoke when the user asks about marketing, growth, or getting
+  users
+
+  and no strategy.md exists yet.

@@ -11,3 +11,7 @@ content/
 
 # forbotsake session state
 .forbotsake/
+
+# Node dependencies (dev only, not needed at install time)
+node_modules/
+bun.lock

@@ -3,6 +3,13 @@
 ## 0.7.0 (2026-04-06)
 
 ### Added
+- **Inline platform research** in `/forbotsake-create`. Before writing content, the skill runs 3-5 web searches for top-performing posts in your niche on the target platform. Extracts hook types, structures, CTA styles, and emotional triggers. Patterns shape the content it writes.
+- Platform-specific search strategies for X/Twitter, LinkedIn, Blog/SEO, Reddit/HN, and Email.
+- `platform-intelligence.md` -- auto-generated append log of discovered patterns per platform. Grows over time. Safe to delete (recreated on next run).
+- `platform_research:` frontmatter section in content files -- per-piece metadata showing what research was done and which patterns were used.
+- Prompt injection sanitization for web search results injected into content generation.
+- 90-second research budget with sequential abort on search failure.
+- FAST mode (`FORBOTSAKE_FAST=1`) now also skips live platform research. Cached patterns from `platform-intelligence.md` are still used if available.
 - **Cross-agent compatibility via template transpilation.** forbotsake now works on Codex, with Kimi and other agents coming next. One codebase, multiple hosts.
 - `hosts/` directory with typed HostConfig objects per agent (claude.ts, codex.ts).
 - `scripts/gen-skill-docs.ts` template generator with resolver system. Run `bun run gen:skill-docs` to regenerate for all hosts.
@@ -13,6 +20,10 @@
 - Explicit degradation contracts per host. Each host config declares exactly what is skipped and why.
 
 ### Changed
+- `/forbotsake-create` adds Phase 2.5 (Platform Reality Check) between channel selection and content writing.
+- `.gitignore` includes `platform-intelligence.md`.
+- CLAUDE.md documents platform research controls and artifacts.
+- README pipeline table updated.
 - All 13 SKILL.md files converted to SKILL.md.tmpl templates (source of truth).
 - `bin/install.sh` now auto-detects installed agents (Claude, Codex, Kimi) and sets up for all.
 - `bin/install.sh --clean` removes all forbotsake symlinks across all agents.

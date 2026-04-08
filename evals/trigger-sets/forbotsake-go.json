@@ -1,0 +1,135 @@
+[
+  {
+    "query": "Do marketing for this project. I just want to get the word out, handle everything from strategy to publishing.",
+    "should_trigger": true
+  },
+  {
+    "query": "Market this. I have no idea where to start but I want content published by end of day.",
+    "should_trigger": true
+  },
+  {
+    "query": "Run the full marketing pipeline. I already have a strategy.md and some draft content, just pick up where I left off.",
+    "should_trigger": true
+  },
+  {
+    "query": "I need to do marketing for my SaaS tool. Whatever is missing, fill it in and get something shipped.",
+    "should_trigger": true
+  },
+  {
+    "query": "One-click marketing please. Take it from zero to published, I trust the defaults.",
+    "should_trigger": true
+  },
+  {
+    "query": "forbotsake-go. Run the whole thing end to end.",
+    "should_trigger": true
+  },
+  {
+    "query": "Help me publish my marketing. I have strategy and content already, just need the remaining steps done.",
+    "should_trigger": true
+  },
+  {
+    "query": "I want to launch marketing for this repo. Figure out what stage I'm at and do the rest automatically.",
+    "should_trigger": true
+  },
+  {
+    "query": "Ship my marketing. I've been building this CLI tool for months and have zero presence online. Handle everything.",
+    "should_trigger": true
+  },
+  {
+    "query": "Run the pipeline for me. I think I have some content drafted but I'm not sure what's left to do.",
+    "should_trigger": true
+  },
+  {
+    "query": "Do all the marketing stuff. Strategy, content, review, publish. The works.",
+    "should_trigger": true
+  },
+  {
+    "query": "I just want marketing done. Detect what exists and run whatever stages are remaining.",
+    "should_trigger": true
+  },
+  {
+    "query": "How should I market this? I built a developer tool and I have no idea who my audience is or what channels to use. Help me think through positioning.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-marketing-start"
+  },
+  {
+    "query": "I need a go-to-market strategy. What should my positioning be and who is the ideal customer? Walk me through it.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-marketing-start"
+  },
+  {
+    "query": "Review my strategy and tell me if my positioning is strong enough. I think the ICP section is weak.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-cmo-check"
+  },
+  {
+    "query": "Challenge my marketing plan. I wrote strategy.md but I'm not confident the channel choices make sense for a B2B dev tool.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-cmo-check"
+  },
+  {
+    "query": "Review this blog post before I publish it. Check if it matches my strategy and reads well.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-content-check"
+  },
+  {
+    "query": "Is this LinkedIn post ready to publish? Check the tone and make sure it doesn't sound like AI slop.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-content-check"
+  },
+  {
+    "query": "What should I post this week? Build me a content calendar based on my strategy.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-content-plan"
+  },
+  {
+    "query": "Create a content plan for the next two weeks. I want a mix of X threads and LinkedIn posts.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-content-plan"
+  },
+  {
+    "query": "Write a Twitter thread about our new feature launch. Make it punchy, aimed at developers.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-create"
+  },
+  {
+    "query": "Draft a blog post about why we built this tool. Target senior engineers who are frustrated with existing solutions.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-create"
+  },
+  {
+    "query": "Set up auto-posting on a schedule. I want my reviewed content to go out every morning at 9am without me doing anything.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-cron"
+  },
+  {
+    "query": "Publish this post to X right now. The content in content/launch-thread.md is reviewed and ready.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-publish"
+  },
+  {
+    "query": "Who is my ideal customer? I need deep audience research. What are their pain points and where do they hang out online?",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-icp"
+  },
+  {
+    "query": "What are my competitors doing for marketing? I want to see what Vercel and Netlify post on social and what gets engagement.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-spy"
+  },
+  {
+    "query": "How do I approach the VP of Engineering at Stripe? I want a targeted outreach plan to get their attention.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-sharpen"
+  },
+  {
+    "query": "What worked this week? Show me a marketing retrospective with engagement numbers and lessons learned.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-retro"
+  },
+  {
+    "query": "Upgrade forbotsake to the latest version.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-upgrade"
+  }
+]

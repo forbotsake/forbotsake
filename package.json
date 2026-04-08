@@ -6,9 +6,14 @@
     "gen:skill-docs": "bun scripts/gen-skill-docs.ts",
     "gen:skill-docs:dry-run": "bun scripts/gen-skill-docs.ts --dry-run",
     "gen:skill-docs:claude": "bun scripts/gen-skill-docs.ts --host claude",
-    "gen:skill-docs:codex": "bun scripts/gen-skill-docs.ts --host codex"
+    "gen:skill-docs:codex": "bun scripts/gen-skill-docs.ts --host codex",
+    "eval": "bun scripts/run-trigger-evals.ts",
+    "eval:claude": "bun scripts/run-trigger-evals.ts --host claude",
+    "eval:verbose": "bun scripts/run-trigger-evals.ts --verbose"
   },
   "devDependencies": {
+    "@types/bun": "^1.3.11",
+    "@types/node": "^25.5.2",
     "yaml": "^2.4.0"
   }
 }

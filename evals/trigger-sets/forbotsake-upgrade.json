@@ -1,0 +1,76 @@
+{
+  "skill": "forbotsake-upgrade",
+  "description": "Upgrades forbotsake to the latest version. Pulls newest skills, bugfixes, and features from the repo.",
+  "cases": [
+    {
+      "query": "Upgrade forbotsake to the latest version. I want the newest skills and any bugfixes.",
+      "should_trigger": true
+    },
+    {
+      "query": "Update forbotsake. I'm on an old version and want to pull the latest changes.",
+      "should_trigger": true
+    },
+    {
+      "query": "Get the latest version of forbotsake. I think there were new skills added recently.",
+      "should_trigger": true
+    },
+    {
+      "query": "forbotsake-upgrade. Pull the latest from the repo and reinstall.",
+      "should_trigger": true
+    },
+    {
+      "query": "Is forbotsake up to date? Check if there's a newer version and upgrade if so.",
+      "should_trigger": true
+    },
+    {
+      "query": "I want the newest forbotsake features. Run the upgrade process to get me current.",
+      "should_trigger": true
+    },
+    {
+      "query": "Update my marketing skills. I saw a new version of forbotsake was released and want to pull it.",
+      "should_trigger": true
+    },
+    {
+      "query": "Pull the latest forbotsake. My installed version is behind and I want the newest skills.",
+      "should_trigger": true
+    },
+    {
+      "query": "Upgrade my forbotsake installation. I heard there are new adversarial review gates in the latest release.",
+      "should_trigger": true
+    },
+    {
+      "query": "Get forbotsake up to date. Run whatever install or upgrade process is needed.",
+      "should_trigger": true
+    },
+    {
+      "query": "Do marketing for this project. Handle everything from strategy to publishing automatically.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-go"
+    },
+    {
+      "query": "How should I market this? I need a full go-to-market strategy with positioning and channels.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-marketing-start"
+    },
+    {
+      "query": "Review my marketing strategy. Challenge the positioning and channel choices.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cmo-check"
+    },
+    {
+      "query": "Write a Twitter thread about our latest feature release. Make it developer-focused.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "What worked this week? Run a marketing retro on my recent posts.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-retro"
+    },
+    {
+      "query": "Publish this post to LinkedIn. It's reviewed and ready to go live now.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-publish"
+    }
+  ]
+}

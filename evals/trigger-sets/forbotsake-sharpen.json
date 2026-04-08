@@ -1,0 +1,104 @@
+{
+  "skill": "forbotsake-sharpen",
+  "description": "Targeted outreach planning for a SPECIFIC person or organization. Builds multi-touch engagement strategies. Requires strategy.md as input. NOT for general competitor research or broad audience analysis.",
+  "cases": [
+    {
+      "query": "How do I approach the VP of Engineering at Stripe? I need a targeted outreach plan to get a meeting with them.",
+      "should_trigger": true
+    },
+    {
+      "query": "Outreach to Guillermo Rauch. I want a multi-touch plan to get Vercel's CEO to notice my tool.",
+      "should_trigger": true
+    },
+    {
+      "query": "Target the DevRel team at Cloudflare. Build me an engagement strategy to get them talking about us.",
+      "should_trigger": true
+    },
+    {
+      "query": "Engage the engineering lead at Figma. What's the best angle to get their attention and start a conversation?",
+      "should_trigger": true
+    },
+    {
+      "query": "How do I approach Jason Warner? He was CTO at GitHub and I think our tool solves a problem he's talked about publicly.",
+      "should_trigger": true
+    },
+    {
+      "query": "Go deeper on Shopify's platform team. I want a specific plan to get our CLI tool in front of their build engineers.",
+      "should_trigger": true
+    },
+    {
+      "query": "Refine my outreach plan for the CTO at Linear. I have strategy.md but need a concrete approach for this specific person.",
+      "should_trigger": true
+    },
+    {
+      "query": "Target YC partners. Build me a multi-touch engagement plan to get forbotsake noticed by the YC community.",
+      "should_trigger": true
+    },
+    {
+      "query": "Approach the head of developer experience at Netlify. I want to turn them into an early champion for our tool.",
+      "should_trigger": true
+    },
+    {
+      "query": "Sharpen my outreach for Supabase's team. They're active on Twitter and I think there's an angle through their open source philosophy.",
+      "should_trigger": true
+    },
+    {
+      "query": "I want a targeted plan to engage Hacker News moderator dang. What's the right way to build rapport before posting?",
+      "should_trigger": true
+    },
+    {
+      "query": "Go deeper on this. My content plan mentions targeting DevOps influencers but I need specific names and approach strategies.",
+      "should_trigger": true
+    },
+    {
+      "query": "What are my competitors doing? Show me a full landscape of developer deployment tools and their marketing approaches.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-spy"
+    },
+    {
+      "query": "Competitor analysis. What messaging angles are Vercel and Netlify using on social media?",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-spy"
+    },
+    {
+      "query": "Find the messaging whitespace in the CI/CD tool market. What are competitors missing?",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-spy"
+    },
+    {
+      "query": "Who is my audience? Build me persona profiles for infrastructure engineers at mid-size startups.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-icp"
+    },
+    {
+      "query": "Where does my ideal customer hang out online? I need community research, not targeted outreach.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-icp"
+    },
+    {
+      "query": "ICP deep dive. What are the pain points and buying triggers for platform engineering leads?",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-icp"
+    },
+    {
+      "query": "Write a Twitter thread aimed at engineering managers. I know the audience, I just need the content written.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "How should I market this? I need a full go-to-market strategy before targeting anyone specific.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-marketing-start"
+    },
+    {
+      "query": "Review my strategy. Challenge my positioning and channel choices before I start doing outreach.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cmo-check"
+    },
+    {
+      "query": "Do marketing for this project end to end. Run the full pipeline automatically.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-go"
+    }
+  ]
+}

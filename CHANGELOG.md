@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.0 (2026-04-08)
+
+### Added
+- **Trigger eval framework.** Measure whether your 13 marketing skills trigger correctly when they should, and don't trigger when they shouldn't. Run `bun run eval` to test all skills against Claude.
+- 13 trigger eval sets (`evals/trigger-sets/*.json`) with 294 total queries. Each skill has 10-15 positive and 10-15 negative test queries, including near-miss negatives that share keywords with other skills.
+- Cross-skill confusion testing for 7 identified confusion pairs (cmo-check vs content-check, content-plan vs create, marketing-start vs go, publish vs cron, spy vs icp, sharpen vs spy, go vs everything).
+- `scripts/run-trigger-evals.ts` eval runner with precision/recall/F1 reporting per skill. Detects WHICH skill triggered (not just boolean), enabling confusion matrix analysis.
+- `scripts/eval-adapters/claude.ts` Claude Code adapter. Ports stream-json detection from skill-creator's run_eval.py to TypeScript with UUID temp files for parallel safety and CLAUDECODE env stripping.
+- Pluggable `EvalAdapter` interface (`scripts/eval-adapters/types.ts`) for future Codex/Kimi host adapters.
+- `evals/README.md` with authoring guide and result interpretation.
+- `evals/confusion-matrix.md` documenting cross-skill confusion pairs and distinguishers.
+
 ## 0.7.0 (2026-04-06)
 
 ### Added

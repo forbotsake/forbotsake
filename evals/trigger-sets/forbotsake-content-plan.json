@@ -1,0 +1,109 @@
+{
+  "skill": "forbotsake-content-plan",
+  "description": "Turns strategy into a content calendar with themes, cadence, and channel mix for 4 weeks. NOT for writing actual content pieces.",
+  "cases": [
+    {
+      "query": "I need a content calendar. I have my strategy done and I know my channels but I need a week-by-week plan of what to post and when.",
+      "should_trigger": true
+    },
+    {
+      "query": "What should I post? I finished my strategy last week and now I'm staring at a blank page. I need topics and themes organized into a schedule.",
+      "should_trigger": true
+    },
+    {
+      "query": "Content plan for the next month please. I can dedicate about 5 hours a week to marketing and I need to know exactly what to create.",
+      "should_trigger": true
+    },
+    {
+      "query": "How often should I post? I'm on X and LinkedIn and I have no idea what cadence makes sense for a dev tool startup.",
+      "should_trigger": true
+    },
+    {
+      "query": "Give me a weekly content plan. I want to know which days to post on which platforms and what the themes should be for each week.",
+      "should_trigger": true
+    },
+    {
+      "query": "Marketing calendar. I need to plan out four weeks of content with a mix of educational posts, product updates, and community engagement.",
+      "should_trigger": true
+    },
+    {
+      "query": "What to write for the next month. I have strategy.md and I need it turned into actionable content topics with deadlines.",
+      "should_trigger": true
+    },
+    {
+      "query": "Content cadence for a solo founder. I can't post every day. Help me figure out a realistic posting schedule that still moves the needle.",
+      "should_trigger": true
+    },
+    {
+      "query": "I need to organize my marketing output. Help me build a content-calendar.md that maps themes to weeks and gives me specific post types per channel.",
+      "should_trigger": true
+    },
+    {
+      "query": "Plan my content for April. I want to ramp up from 2 posts/week to 5 posts/week by end of month. What should the schedule look like?",
+      "should_trigger": true
+    },
+    {
+      "query": "I've been posting randomly with no structure. I need a real content plan that ties back to my strategy pillars.",
+      "should_trigger": true
+    },
+    {
+      "query": "Build me a content calendar that mixes long-form blog posts with short X threads. I want a sustainable weekly rhythm.",
+      "should_trigger": true
+    },
+    {
+      "query": "Write me a LinkedIn post about our product launch. I know the topic, I just need the actual post written.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "Draft a thread about why developers hate marketing. Make it punchy and authentic.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "Create a blog post about our approach to AI agents. I have a rough outline in my head.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "Write marketing copy for our landing page. I need a hero section and three feature blocks.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "Help me write a launch email for our waitlist. Something that creates urgency without being sleazy.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "Review my strategy. I want to know if the messaging pillars are strong enough before I start planning content.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cmo-check"
+    },
+    {
+      "query": "Check this post before I publish. I need a content review on voice and CTA.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-check"
+    },
+    {
+      "query": "How should I market this? I don't have a strategy yet. I need to start from scratch with positioning and ICP.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-marketing-start"
+    },
+    {
+      "query": "Publish this post to LinkedIn now. It's done and reviewed.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-publish"
+    },
+    {
+      "query": "Set up auto-posting so my reviewed content goes out on schedule without me.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cron"
+    },
+    {
+      "query": "Run the whole marketing pipeline for me. I don't have anything set up yet.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-go"
+    }
+  ]
+}

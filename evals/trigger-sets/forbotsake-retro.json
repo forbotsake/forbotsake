@@ -1,0 +1,100 @@
+{
+  "skill": "forbotsake-retro",
+  "description": "Marketing performance retrospective. Measures engagement, identifies what worked and what flopped, surfaces actionable patterns. NOT for reviewing content before publishing or challenging strategy.",
+  "cases": [
+    {
+      "query": "What worked this week? Show me a marketing retrospective with engagement numbers and lessons learned.",
+      "should_trigger": true
+    },
+    {
+      "query": "Marketing retro. Which posts performed best over the last two weeks and what patterns can I learn from?",
+      "should_trigger": true
+    },
+    {
+      "query": "Measure my marketing results. I want to see which content got traction and which flopped.",
+      "should_trigger": true
+    },
+    {
+      "query": "Review my marketing performance. How did my LinkedIn posts do compared to my Twitter threads this month?",
+      "should_trigger": true
+    },
+    {
+      "query": "Which content performed best? Give me a ranked list of my recent posts by engagement and tell me why the top ones worked.",
+      "should_trigger": true
+    },
+    {
+      "query": "Run a retro on my marketing. I've been posting for three weeks and want to know what's actually moving the needle.",
+      "should_trigger": true
+    },
+    {
+      "query": "Marketing review. Pull the numbers on my last 10 posts and help me understand what resonated with my audience.",
+      "should_trigger": true
+    },
+    {
+      "query": "What worked and what didn't? I need a data-driven review of my content performance to inform next week's plan.",
+      "should_trigger": true
+    },
+    {
+      "query": "Show me my marketing results. I want engagement metrics, reach, and any conversion data for the last month.",
+      "should_trigger": true
+    },
+    {
+      "query": "Performance retrospective. Analyze my published content and tell me which topics and formats I should double down on.",
+      "should_trigger": true
+    },
+    {
+      "query": "Did my launch marketing work? I posted five pieces of content around the v2 release and want to see the impact.",
+      "should_trigger": true
+    },
+    {
+      "query": "Review my strategy and tell me if my positioning is strong enough. I think the channel mix is wrong.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cmo-check"
+    },
+    {
+      "query": "Challenge my marketing plan. The strategy.md feels generic and I want a tough CMO-level critique.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cmo-check"
+    },
+    {
+      "query": "Check this post before I publish. Is it ready, or does the tone need work?",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-check"
+    },
+    {
+      "query": "Review this content piece. I want to know if it matches my strategy before it goes live.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-check"
+    },
+    {
+      "query": "What should I post next week? Build me a content calendar based on what's in my strategy.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-plan"
+    },
+    {
+      "query": "Create a content plan for the next two weeks. Give me topics, channels, and a publishing schedule.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-plan"
+    },
+    {
+      "query": "What are my competitors posting? Show me their content strategy and what gets engagement.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-spy"
+    },
+    {
+      "query": "How should I market this product? I need a full strategy from scratch.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-marketing-start"
+    },
+    {
+      "query": "Write a Twitter thread summarizing this week's learnings. Make it feel authentic.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "Do marketing for this. Run the entire pipeline end to end.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-go"
+    }
+  ]
+}

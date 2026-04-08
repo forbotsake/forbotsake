@@ -1,0 +1,120 @@
+[
+  {
+    "query": "How should I market this? I built a CLI tool for managing Kubernetes clusters and I have zero marketing. Where do I even start?",
+    "should_trigger": true
+  },
+  {
+    "query": "I need a go-to-market strategy for my open source project. Help me figure out positioning, audience, and which channels to focus on.",
+    "should_trigger": true
+  },
+  {
+    "query": "Help me market this. I've never done marketing before and I need to understand who my customers are and how to reach them.",
+    "should_trigger": true
+  },
+  {
+    "query": "GTM plan needed. We're launching a new API product next month and I need a strategy document covering positioning and first moves.",
+    "should_trigger": true
+  },
+  {
+    "query": "I don't know how to sell this. It's a developer productivity tool but I can't articulate why someone would pay for it. Help me with positioning.",
+    "should_trigger": true
+  },
+  {
+    "query": "What's my marketing strategy? I want you to read the codebase, understand what I built, and help me figure out who cares and why.",
+    "should_trigger": true
+  },
+  {
+    "query": "Help me think through my positioning. I'm competing with three other tools in the observability space and I need to differentiate.",
+    "should_trigger": true
+  },
+  {
+    "query": "I need a marketing strategy. Ask me the hard questions about my audience and channels, then give me a concrete plan I can execute.",
+    "should_trigger": true
+  },
+  {
+    "query": "Positioning help. My product does workflow automation but I can't figure out if I should target developers or ops teams. Walk me through it.",
+    "should_trigger": true
+  },
+  {
+    "query": "Help me sell this tool. I know it's useful but I can't explain the value prop clearly. I need strategy before I write any content.",
+    "should_trigger": true
+  },
+  {
+    "query": "forbotsake-marketing-start. I want to go through the full strategy exercise from scratch.",
+    "should_trigger": true
+  },
+  {
+    "query": "I have no strategy.md yet. Read my codebase and help me figure out the marketing angle for this project.",
+    "should_trigger": true
+  },
+  {
+    "query": "Do marketing for this project. Handle everything from strategy to publishing, I just want content out the door.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-go"
+  },
+  {
+    "query": "Run the full marketing pipeline end to end. I already have a strategy, pick up from there and ship whatever is next.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-go"
+  },
+  {
+    "query": "One-click marketing. Take it from wherever I am to published, I trust the defaults.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-go"
+  },
+  {
+    "query": "Market this. I have strategy.md and content already drafted. Just run the remaining pipeline stages.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-go"
+  },
+  {
+    "query": "Review my strategy and tell me if my positioning is solid. I think I need to sharpen the ICP section.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-cmo-check"
+  },
+  {
+    "query": "Challenge my marketing strategy. Is my channel selection right for a B2B dev tool? Give me honest feedback on strategy.md.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-cmo-check"
+  },
+  {
+    "query": "What should I post this week? Turn my strategy into a content calendar with specific topics and dates.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-content-plan"
+  },
+  {
+    "query": "Write a launch thread for X. I want something punchy that announces our v2.0 release to developers.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-create"
+  },
+  {
+    "query": "Who is my ideal customer? Do deep audience research. I want psychographics, pain points, and where they spend time online.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-icp"
+  },
+  {
+    "query": "What are my competitors doing? Analyze the marketing of Supabase, PlanetScale, and Neon to find gaps I can exploit.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-spy"
+  },
+  {
+    "query": "Check this blog post before I publish it. Make sure the messaging aligns with my strategy and the tone is right.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-content-check"
+  },
+  {
+    "query": "Publish my reviewed content to LinkedIn. The post in content/week1-linkedin.md is ready to go live.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-publish"
+  },
+  {
+    "query": "How do I approach the CTO at Datadog? Build me a targeted outreach plan with specific touchpoints.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-sharpen"
+  },
+  {
+    "query": "Set up autopilot posting. I want cron to handle publishing my reviewed content on a schedule.",
+    "should_trigger": false,
+    "intended_skill": "forbotsake-cron"
+  }
+]

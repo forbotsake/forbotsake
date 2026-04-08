@@ -1,0 +1,109 @@
+{
+  "skill": "forbotsake-content-check",
+  "description": "Reviews written content against strategy before publishing. Checks voice, messaging alignment, CTA, channel fit, length. NOT for reviewing strategy itself.",
+  "cases": [
+    {
+      "query": "I just finished drafting a LinkedIn post about our new feature. Can you review it before I publish? I want to make sure the voice is right.",
+      "should_trigger": true
+    },
+    {
+      "query": "Check this post. I wrote an X thread for our launch and I need someone to tell me if the CTA is strong enough and whether the hook will land.",
+      "should_trigger": true
+    },
+    {
+      "query": "Is this ready to publish? I wrote a blog post last night and I want to make sure it matches our strategy and brand voice before it goes live.",
+      "should_trigger": true
+    },
+    {
+      "query": "Content review please. I have three posts in the content/ folder and I need all of them checked against our messaging pillars.",
+      "should_trigger": true
+    },
+    {
+      "query": "Review before posting. I'm about to ship this email newsletter and I want a final check on tone, CTA, and whether it fits the format.",
+      "should_trigger": true
+    },
+    {
+      "query": "Does this match my brand? I wrote a launch announcement thread but I'm worried it sounds too corporate and doesn't match the voice in my strategy.",
+      "should_trigger": true
+    },
+    {
+      "query": "Check my thread. I drafted a 7-tweet thread about why we built this product. Is it too long? Does the narrative arc work?",
+      "should_trigger": true
+    },
+    {
+      "query": "I need a content check on this HN launch post. Make sure it doesn't sound like marketing fluff and actually resonates with the HN audience.",
+      "should_trigger": true
+    },
+    {
+      "query": "Review my email draft. I'm sending this to our waitlist tomorrow and I want to confirm the messaging aligns with our positioning.",
+      "should_trigger": true
+    },
+    {
+      "query": "I just ran /forbotsake-create and it generated a LinkedIn post. Before I publish, can you review it and score it?",
+      "should_trigger": true
+    },
+    {
+      "query": "Is this content piece ready for my audience? I want to catch any messaging drift or weak spots before I hit publish.",
+      "should_trigger": true
+    },
+    {
+      "query": "I wrote a product update post for X. Can you tell me if the length is right for the platform and if the CTA makes sense?",
+      "should_trigger": true
+    },
+    {
+      "query": "Review my marketing strategy. I want to know if my positioning holds up and whether my channel choices make sense for my ICP.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cmo-check"
+    },
+    {
+      "query": "Is my strategy good? I just finished writing strategy.md and I want someone to rate each section before I start executing.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cmo-check"
+    },
+    {
+      "query": "Challenge my marketing plan. I'm worried my positioning is too generic and won't differentiate us from competitors.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cmo-check"
+    },
+    {
+      "query": "Poke holes in my strategy. I need a skeptical CMO perspective on whether my ICP is concrete enough.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cmo-check"
+    },
+    {
+      "query": "Write me a LinkedIn post about our Series A announcement. I want it to be authentic and not sound like every other fundraising post.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "Post this to X. It's been reviewed and I'm happy with it. Just need it published.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-publish"
+    },
+    {
+      "query": "What should I post this week? I need a content calendar for the next 4 weeks with specific topics and themes.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-plan"
+    },
+    {
+      "query": "How should I market this product? I have no strategy yet. Help me figure out positioning, ICP, and channels.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-marketing-start"
+    },
+    {
+      "query": "Do marketing for me. Just run the whole pipeline from scratch.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-go"
+    },
+    {
+      "query": "What worked in our marketing last month? Run a retro on our content performance.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-retro"
+    },
+    {
+      "query": "Schedule my reviewed posts to auto-publish at 9am every day. Set up the cron job.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cron"
+    }
+  ]
+}

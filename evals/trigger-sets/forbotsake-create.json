@@ -1,0 +1,109 @@
+{
+  "skill": "forbotsake-create",
+  "description": "Writes actual marketing content: X threads, blog posts, emails, LinkedIn posts. Uses strategy.md and content-calendar.md. NOT for planning what to write.",
+  "cases": [
+    {
+      "query": "Write me a thread about why we built this product. I want it for X, punchy, with a strong hook and clear CTA at the end.",
+      "should_trigger": true
+    },
+    {
+      "query": "Create a LinkedIn post announcing our new feature. Keep it professional but not boring. Include a personal founder angle.",
+      "should_trigger": true
+    },
+    {
+      "query": "Draft an email for our waitlist. We're launching next week and I need something that creates excitement without being spammy.",
+      "should_trigger": true
+    },
+    {
+      "query": "Write a blog post explaining our technical approach. The audience is senior engineers who are skeptical of AI hype.",
+      "should_trigger": true
+    },
+    {
+      "query": "LinkedIn post please. I want to share the story of how we got our first 100 users and what we learned.",
+      "should_trigger": true
+    },
+    {
+      "query": "Help me write a launch announcement for Hacker News. It needs to be concise, technical, and avoid anything that sounds like marketing.",
+      "should_trigger": true
+    },
+    {
+      "query": "Create content for our product update. I want a short X post and a longer LinkedIn version covering the same news.",
+      "should_trigger": true
+    },
+    {
+      "query": "Write marketing copy for an email drip sequence. Three emails: welcome, value prop, and activation nudge.",
+      "should_trigger": true
+    },
+    {
+      "query": "I need a tweet thread breaking down our pricing philosophy. Something that explains why we're cheap compared to enterprise tools.",
+      "should_trigger": true
+    },
+    {
+      "query": "Draft a content piece about the problem we solve. I want something that resonates with founders who've felt this pain.",
+      "should_trigger": true
+    },
+    {
+      "query": "Create a hot take post for X about why most developer marketing is terrible. Tie it back to our approach.",
+      "should_trigger": true
+    },
+    {
+      "query": "Write me a case study post based on the feedback we got from our beta users. I'll give you the quotes.",
+      "should_trigger": true
+    },
+    {
+      "query": "What should I post this week? I need a plan with specific topics and a posting schedule for the next 4 weeks.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-plan"
+    },
+    {
+      "query": "I need a content calendar. Map out themes for each week and tell me how many posts per platform.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-plan"
+    },
+    {
+      "query": "How often should I post on LinkedIn? I need help figuring out my posting cadence and content mix.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-plan"
+    },
+    {
+      "query": "Plan my marketing content for the month. I want themes, topics, and a schedule, not actual written posts.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-plan"
+    },
+    {
+      "query": "Give me a weekly content rhythm. I want to know what types of posts to do on which days.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-plan"
+    },
+    {
+      "query": "Review this post before I publish it. Is the voice right? Is the CTA strong enough?",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-check"
+    },
+    {
+      "query": "Check if my blog post is ready to go live. I need someone to verify it matches our brand voice and strategy.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-check"
+    },
+    {
+      "query": "Review my marketing strategy. I want to know if my positioning is differentiated enough.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cmo-check"
+    },
+    {
+      "query": "Publish this post to X right now. It's already written and reviewed.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-publish"
+    },
+    {
+      "query": "How should I market this product? I have nothing yet and need help with the whole strategy from scratch.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-marketing-start"
+    },
+    {
+      "query": "Who are my competitors? I need a competitive analysis before I decide how to position myself.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-spy"
+    }
+  ]
+}

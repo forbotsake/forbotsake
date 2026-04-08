@@ -1,0 +1,105 @@
+{
+  "skill": "forbotsake-spy",
+  "description": "Competitor analysis and messaging whitespace detection. Researches what COMPETITORS are doing, their content strategies, positioning, and engagement patterns. NOT for audience research or targeting specific individuals.",
+  "cases": [
+    {
+      "query": "What are my competitors doing? I want a full landscape analysis of the tools in my space and how they position themselves.",
+      "should_trigger": true
+    },
+    {
+      "query": "Competitor analysis. Show me what Vercel, Netlify, and Railway are posting on social and what gets the most engagement.",
+      "should_trigger": true
+    },
+    {
+      "query": "Who am I competing with? I need to understand the messaging landscape for developer deployment tools.",
+      "should_trigger": true
+    },
+    {
+      "query": "Find the messaging whitespace. What are competitors NOT saying that I could own as a positioning angle?",
+      "should_trigger": true
+    },
+    {
+      "query": "Market landscape for AI coding tools. What marketing approaches are Cursor, Copilot, and Codeium using?",
+      "should_trigger": true
+    },
+    {
+      "query": "I want to see what others in my niche are doing for content. Pull competitor social posts and identify patterns.",
+      "should_trigger": true
+    },
+    {
+      "query": "Spy on my competitors. What is Linear posting on Twitter and how does their messaging compare to mine?",
+      "should_trigger": true
+    },
+    {
+      "query": "Run a competitive messaging audit. I need to know how crowded my positioning is and where I can differentiate.",
+      "should_trigger": true
+    },
+    {
+      "query": "Analyze competitor content strategies. What channels are they using, what formats, and what angles get traction?",
+      "should_trigger": true
+    },
+    {
+      "query": "What are alternatives to my product saying in their marketing? I need to map the competitive narrative landscape.",
+      "should_trigger": true
+    },
+    {
+      "query": "Show me what's working for competitors on LinkedIn. I want to study their top-performing posts to learn from them.",
+      "should_trigger": true
+    },
+    {
+      "query": "Who is my ideal customer? I need deep audience research and persona profiles for developer advocates at mid-size companies.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-icp"
+    },
+    {
+      "query": "Where does my audience hang out online? I need community research on DevOps engineers.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-icp"
+    },
+    {
+      "query": "Build me an ICP. I want to understand pain points, watering holes, and buying triggers for my target user.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-icp"
+    },
+    {
+      "query": "How do I approach the CTO at Datadog? I want a targeted outreach strategy specifically for that person.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-sharpen"
+    },
+    {
+      "query": "Target Stripe's developer relations team. Build me a multi-touch plan to get their attention.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-sharpen"
+    },
+    {
+      "query": "Engage the engineering lead at Figma. I need a specific outreach plan, not general market research.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-sharpen"
+    },
+    {
+      "query": "How should I market this? I have no strategy yet and need to figure out positioning from scratch.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-marketing-start"
+    },
+    {
+      "query": "Review my strategy. I think my positioning is weak and want a CMO-level challenge on the whole plan.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cmo-check"
+    },
+    {
+      "query": "Write a thread about why our product beats Notion for engineering teams. Make it specific and edgy.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "What worked in my marketing this week? Show me a retro with engagement numbers.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-retro"
+    },
+    {
+      "query": "Do marketing for this project end to end. Handle everything from research to publishing.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-go"
+    }
+  ]
+}

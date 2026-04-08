@@ -1,0 +1,104 @@
+{
+  "skill": "forbotsake-icp",
+  "description": "Audience research and persona profiling. Identifies ideal customer profiles, pain points, community watering holes, and buying triggers. NOT for competitor analysis or targeted outreach to specific people.",
+  "cases": [
+    {
+      "query": "Who is my audience? I need to understand exactly who would pay for this and what their daily frustrations are.",
+      "should_trigger": true
+    },
+    {
+      "query": "ICP deep dive. Build me detailed persona profiles for the people most likely to use a CLI-based deployment tool.",
+      "should_trigger": true
+    },
+    {
+      "query": "Who is my ideal customer? I want to know their job title, company size, pain points, and where they spend time online.",
+      "should_trigger": true
+    },
+    {
+      "query": "Audience research. Where do senior backend engineers hang out? What communities, subreddits, and Slack groups should I target?",
+      "should_trigger": true
+    },
+    {
+      "query": "I need persona profiles for my dev tool. Who is the buyer vs the user? What are their distinct needs?",
+      "should_trigger": true
+    },
+    {
+      "query": "Where does my target user hang out online? I want community research for infrastructure engineers at startups.",
+      "should_trigger": true
+    },
+    {
+      "query": "Help me define my ICP. I'm building for DevOps teams but I'm not sure if I should target platform engineers or SREs.",
+      "should_trigger": true
+    },
+    {
+      "query": "Who should I target? I need to narrow down from 'developers' to a specific segment with real buying power.",
+      "should_trigger": true
+    },
+    {
+      "query": "Do audience research for my API monitoring tool. What are the top pain points for the people who would buy this?",
+      "should_trigger": true
+    },
+    {
+      "query": "Build an ICP profile. I want to know the trigger events that make someone search for a tool like mine.",
+      "should_trigger": true
+    },
+    {
+      "query": "Community research. Which Discord servers, Twitter accounts, and newsletters do my potential users follow?",
+      "should_trigger": true
+    },
+    {
+      "query": "Who are the early adopters for a new testing framework? Map out the persona, psychographics, and watering holes.",
+      "should_trigger": true
+    },
+    {
+      "query": "What are my competitors doing? Show me what Datadog and New Relic post on social and how they position themselves.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-spy"
+    },
+    {
+      "query": "Competitor analysis for the monitoring space. What messaging angles are PagerDuty and Grafana using?",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-spy"
+    },
+    {
+      "query": "Find the messaging whitespace. What are competitors NOT talking about that I could own?",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-spy"
+    },
+    {
+      "query": "How do I approach the VP of Engineering at Shopify? Build me a targeted outreach plan for that specific person.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-sharpen"
+    },
+    {
+      "query": "Target the DevRel team at Vercel. I want a multi-touch engagement strategy to get a conversation started.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-sharpen"
+    },
+    {
+      "query": "How should I market this? I need an overall strategy with positioning, channels, and messaging.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-marketing-start"
+    },
+    {
+      "query": "Review my strategy. Is my ICP section specific enough or is it too broad?",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cmo-check"
+    },
+    {
+      "query": "Write a LinkedIn post targeting engineering managers. I already know who they are, just write the content.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "What should I post this week? Give me a content calendar with topics and dates.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-plan"
+    },
+    {
+      "query": "Do marketing for this. Handle the whole pipeline from start to finish.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-go"
+    }
+  ]
+}

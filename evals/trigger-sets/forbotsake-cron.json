@@ -1,0 +1,104 @@
+{
+  "skill": "forbotsake-cron",
+  "description": "Installs and manages autonomous posting via cron. Reads content-calendar.md for scheduled posts, auto-publishes reviewed content at scheduled times. NOT for one-shot immediate posting.",
+  "cases": [
+    {
+      "query": "Set up auto-posting. I want my reviewed content to go out on a schedule without me touching anything.",
+      "should_trigger": true
+    },
+    {
+      "query": "Schedule my posts for next week. I want them published automatically at the best times each day.",
+      "should_trigger": true
+    },
+    {
+      "query": "Install the autopilot cron job. I want content posted every morning at 9am from my calendar.",
+      "should_trigger": true
+    },
+    {
+      "query": "Put my posting on autopilot. I have reviewed content queued up and want it shipped without manual intervention.",
+      "should_trigger": true
+    },
+    {
+      "query": "I want autonomous posting. Set up the cron so reviewed content gets published on its own schedule.",
+      "should_trigger": true
+    },
+    {
+      "query": "Schedule my content to go out automatically. I've reviewed everything, just need the automation set up.",
+      "should_trigger": true
+    },
+    {
+      "query": "Post without me. I'm going on vacation and want my content calendar to keep publishing while I'm gone.",
+      "should_trigger": true
+    },
+    {
+      "query": "Automate my posting schedule. The content-calendar.md has dates and times, just wire up the cron to execute it.",
+      "should_trigger": true
+    },
+    {
+      "query": "forbotsake-cron install. I want the 30-minute cron running for my content calendar.",
+      "should_trigger": true
+    },
+    {
+      "query": "Enable scheduled posting. I have 12 posts in my content calendar and I want them to go out over the next two weeks automatically.",
+      "should_trigger": true
+    },
+    {
+      "query": "Check the status of my cron. Is autopilot running? When is the next scheduled post?",
+      "should_trigger": true
+    },
+    {
+      "query": "Pause the auto-posting. I need to hold off on publishing until I fix my strategy.",
+      "should_trigger": true
+    },
+    {
+      "query": "Publish this post to X right now. The content is reviewed and ready, I just need it posted immediately.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-publish"
+    },
+    {
+      "query": "Post this to LinkedIn right now. Don't schedule it, I want it live this second.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-publish"
+    },
+    {
+      "query": "Ship this content immediately. No scheduling, just one-shot post it to Twitter.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-publish"
+    },
+    {
+      "query": "What should I post this week? Build me a content calendar with topics and channels.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-plan"
+    },
+    {
+      "query": "Create a content plan for the next month. I need to know what topics to write about.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-plan"
+    },
+    {
+      "query": "Write a Twitter thread about our pricing change. Needs to be developer-friendly and honest.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "Review this post before I publish. Check if the tone matches my brand voice.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-check"
+    },
+    {
+      "query": "Do marketing for this project. Run the full pipeline from strategy through publishing.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-go"
+    },
+    {
+      "query": "What worked this week? Show me a marketing retrospective with engagement data.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-retro"
+    },
+    {
+      "query": "How should I market this product? Help me figure out positioning and channels from scratch.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-marketing-start"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "skill": "forbotsake-publish",
+  "description": "Ships content to a platform. POST mode (Chrome automation) or COPY mode (formatted text for manual paste). One-shot publishing of reviewed content. NOT for scheduling or recurring automation.",
+  "cases": [
+    {
+      "query": "Publish this post to X right now. The content file is reviewed and ready to go, I just need it posted.",
+      "should_trigger": true
+    },
+    {
+      "query": "Post this to LinkedIn. The draft in content/week3-thread.md has been reviewed, just ship it.",
+      "should_trigger": true
+    },
+    {
+      "query": "Ship this content. I want the launch thread posted to Twitter immediately.",
+      "should_trigger": true
+    },
+    {
+      "query": "Format this for Twitter and post it. The blog recap is in content/blog-recap.md and it's ready.",
+      "should_trigger": true
+    },
+    {
+      "query": "Ready to publish. Take content/feature-announcement.md and post it to X. I've already reviewed it.",
+      "should_trigger": true
+    },
+    {
+      "query": "Post to X. My launch announcement thread is done, reviewed, and I want it live now.",
+      "should_trigger": true
+    },
+    {
+      "query": "I need to publish my content right now. The HN post in content/hn-launch.md is final, just post it.",
+      "should_trigger": true
+    },
+    {
+      "query": "Copy mode. I need the final formatted text for my LinkedIn post so I can paste it manually.",
+      "should_trigger": true
+    },
+    {
+      "query": "Ship this LinkedIn post. It passed content review and I want it live within the next five minutes.",
+      "should_trigger": true
+    },
+    {
+      "query": "Publish my content. I have three reviewed posts and I want them all posted to their respective channels right now.",
+      "should_trigger": true
+    },
+    {
+      "query": "Post this one-shot. Take the reviewed content and put it on X, no scheduling needed.",
+      "should_trigger": true
+    },
+    {
+      "query": "I just want this posted. The thread is done, content-check passed, just get it on Twitter.",
+      "should_trigger": true
+    },
+    {
+      "query": "Set up auto-posting on a schedule. I want my reviewed content to go out every morning at 9am without me doing anything.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cron"
+    },
+    {
+      "query": "Schedule all my posts for next week. I want them to go out automatically at optimal times.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cron"
+    },
+    {
+      "query": "I want to put posting on autopilot. Install whatever cron job is needed so content goes out on its own.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-cron"
+    },
+    {
+      "query": "Review this blog post before I publish it. Check tone, strategy alignment, and whether it sounds authentic.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-check"
+    },
+    {
+      "query": "Is this LinkedIn post ready? Check if it matches my strategy and doesn't read like AI slop.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-check"
+    },
+    {
+      "query": "Write a Twitter thread about our new feature. Make it punchy and developer-focused.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "Draft a launch post for LinkedIn. I need content created from scratch for our v2 release.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-create"
+    },
+    {
+      "query": "Do marketing for this project. Handle everything from strategy to publishing end to end.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-go"
+    },
+    {
+      "query": "What should I post this week? Build me a content calendar based on my strategy.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-content-plan"
+    },
+    {
+      "query": "What worked this week? Show me engagement numbers and a retrospective on my recent posts.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-retro"
+    },
+    {
+      "query": "How should I market this? I need a go-to-market strategy before I write any content.",
+      "should_trigger": false,
+      "intended_skill": "forbotsake-marketing-start"
+    }
+  ]
+}

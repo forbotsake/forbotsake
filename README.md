@@ -2,317 +2,189 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skills-blueviolet)](https://docs.anthropic.com/en/docs/claude-code)
-[![Twitter](https://img.shields.io/twitter/follow/hanselh_?style=social)](https://x.com/hanselh_)
 
-Marketing skills for Claude Code. From zero marketing knowledge to published content.
+The open-source GTM workflow for technical founders who built something real and still got weak traction.
 
-You can build the product. This helps you sell it.
+You built the product.
+Now build the go-to-market system.
 
-**Who this is for:** Devtool founders who shipped v1 but have <10 qualified leads/month. You use Claude Code daily. You know how to code. You don't know how to market. forbotsake fixes that.
+![forbotsake hero](assets/forbotsake-hero.svg)
 
-**What makes this different:** Every other marketing plugin gives you `/write-blog-post`. forbotsake asks you 6 hard questions first, then tells you what to write, where to post it, and why. Thinking first, then execution. The skills encode real agency methodology, not generic prompts.
+forbotsake turns a repo, a rough launch story, and a founder's context into:
+- sharper positioning
+- clearer ICP
+- competitor contrast
+- content and launch assets
+- outreach plans
+- repeatable distribution workflows
 
-## Install (30 seconds)
+This is not another AI copy toy.
+It is a marketing operating system for technical founders.
 
-**Option 1 — one-liner:**
+## Why this exists
+
+AI made building much easier.
+That shifted the bottleneck.
+
+A lot of technical founders do not have a product problem anymore.
+They have a translation problem:
+- what exactly is this?
+- who is it for?
+- why now?
+- what should I say first?
+- where should this actually go?
+
+forbotsake exists to answer those questions before you spray content everywhere.
+
+## What you get in 10 minutes
+
+Run the first skill and you do not get a generic blog post.
+You get working GTM artifacts.
+
+- `strategy.md`
+  - positioning, ICP, channels, messaging pillars
+- `founder-profile.md`
+  - context, relationships, unfair advantages
+- `competitor-analysis.md`
+  - messaging matrix and whitespace
+- `icp-profile.md`
+  - real audience language, communities, triggers
+- `content-calendar.md`
+  - what to publish, where, and why
+- `content/*`
+  - actual posts, threads, emails, launch copy
+
+See a concrete walkthrough in [examples/what-you-get-in-10-minutes.md](examples/what-you-get-in-10-minutes.md).
+
+## Who this is for
+
+forbotsake is for:
+- devtool founders
+- AI tool founders
+- OSS maintainers with commercialization intent
+- technical founders who shipped v1 but still have weak distribution
+
+Especially if this sounds familiar:
+- the repo has stars but no real pipeline
+- launches feel rushed and vague
+- you can build fast but do not know how to position the thing cleanly
+- generic AI marketing tools give you motion, not traction
+
+## What makes this different
+
+Most AI marketing tools start with:
+- write a blog post
+- write a tweet
+- write a launch thread
+
+forbotsake starts earlier.
+
+It asks:
+- who exactly has this problem?
+- what do they do today instead?
+- what category are you really in?
+- what are competitors saying?
+- where does your buyer actually pay attention?
+
+Thinking first.
+Then execution.
+
+## Why this beats generic AI copy tools
+
+Generic AI copy tools are good at producing words.
+They are bad at:
+- choosing the right wedge
+- rejecting weak positioning
+- grounding messaging in a specific ICP
+- finding whitespace in a real market
+- turning a founder's context into a repeatable GTM system
+
+forbotsake is opinionated on purpose.
+
+## Install
+
+### Option 1: one-liner
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/forbotsake/forbotsake/main/bin/install.sh)
 ```
 
-**Option 2 — manual:**
+### Option 2: manual
 ```bash
 git clone --single-branch --depth 1 https://github.com/forbotsake/forbotsake.git ~/.claude/skills/forbotsake
 bash ~/.claude/skills/forbotsake/bin/sync-links.sh
 ```
 
-No build step. No dependencies for core skills. Optional: bun/node for text-card generation, Claude for Chrome for AI image generation.
+No build step for core skills.
+Optional extras:
+- bun/node for text-card generation
+- browser automation for publishing and visual generation
 
-**Verify it worked:**
+Verify install:
 ```bash
 bash ~/.claude/skills/forbotsake/bin/sync-links.sh --check
 ```
 
-## The Pipeline
-
-forbotsake skills follow a sequence. Start at the top, work down.
-
-```
-UNDERSTAND → CHALLENGE → RESEARCH → PLAN → SHARPEN → CREATE → RED TEAM → REVIEW → KILL SWITCH → SHIP → MEASURE
-```
-
-| # | Stage | Command | What it does |
-|---|-------|---------|-------------|
-| 1 | UNDERSTAND | `/forbotsake-marketing-start` | Ask 6 hard questions, produce strategy.md + founder-profile.md + brand.md |
-| 2 | CHALLENGE | `/forbotsake-cmo-check` | Push back on your strategy. Score it. Force alternatives. |
-| 3 | RESEARCH | `/forbotsake-spy` | Browse 3-5 competitors, build a messaging matrix |
-| 4 | RESEARCH | `/forbotsake-icp` | Deep-dive your ideal customer: behavior, pain, communities |
-| 5 | PLAN | `/forbotsake-content-plan` | Content calendar: themes, formats, cadence per channel |
-| 5.5 | SHARPEN | `/forbotsake-sharpen` | Research a specific target, map connections, build multi-touch plan |
-| 6 | CREATE | `/forbotsake-create` | Research platform patterns + write content + generate visuals |
-| 7 | REVIEW | `/forbotsake-content-check` | Pre-publish check: brand voice, messaging, channel fit, visual consistency |
-| 8 | SHIP | `/forbotsake-publish` | Auto-post with media via Chrome, or copy-paste ready text + image paths |
-| 9 | MEASURE | `/forbotsake-retro` | Weekly retro: what worked, what to change next |
-
 ## Quick start
 
-1. Install (see above)
+1. Install
 2. Open your project in Claude Code
-3. Type `/forbotsake` to see all available skills (or go straight to `/forbotsake-marketing-start`)
-4. Answer 6 questions about your product and your position
-5. Get a strategy.md + founder-profile.md with your positioning, ICP, channels, and connections
+3. Run `/forbotsake-marketing-start`
+4. Answer 6 hard questions
+5. Work down the pipeline
 
-Then work through the pipeline: challenge it, research competitors, plan content, create it, review it, ship it, measure it.
+## The pipeline
 
-## See it work
-
-Real conversation. A developer who built a DB migration CLI with 800 GitHub stars and zero paying users.
-
-```
-You:    I built a migration tool. I should probably tweet about it or something.
-
-You:    /forbotsake-marketing-start
-
-Claude: Before you tweet anything — 6 questions. These will hurt.
-
-        1. "Who specifically has this problem?" Not "developers." Which
-           developers, at which companies, hitting which wall, right now?
-
-        2. "What do they do today without your tool?" If the answer is
-           "nothing" — you don't have a market. If the answer is
-           "a painful manual process" — now we're talking.
-
-You:    Platform engineers at Series B+ startups. They manage 50-200
-        microservices. Schema changes break staging every week. They
-        use Flyway or hand-rolled bash scripts. It's a mess.
-
-Claude: Stop. You said "migration tool." But what you actually described
-        is a schema coordination layer for platform teams.
-
-        "Migration tool" competes with Flyway, Liquibase, and 40 others.
-        "Schema coordination for platform teams" has 3 competitors and
-        none of them nail the multi-service case.
-
-        [writes strategy.md — positioning, ICP, 3 channels, messaging
-         pillars, founder profile with your network mapped]
-
-You:    /forbotsake-cmo-check
-
-Claude: Your strategy has problems.
-
-        Positioning: STRONG. "Schema coordination" is a real gap.
-        ICP: WEAK. "Series B+" is not specific enough.
-        → Who is the buyer? The platform eng lead? The VP Eng?
-           Different person = different message = different channel.
-        Channels: ADEQUATE. But you listed "Twitter, HN, blog."
-           That's what everyone lists. Where do platform engineers
-           actually go when they have this problem?
-        → Kubernetes Slack, CNCF channels, PlatformCon talks.
-
-        Score: 6/10. Strong core, weak distribution.
-        [rewrites the weak sections, asks you to approve]
-
-You:    /forbotsake-spy
-
-Claude: [researches Flyway, Liquibase, Atlas, PlanetScale, Bytebase]
-
-        Messaging matrix:
-        ┌──────────────┬─────────┬─────────┬──────────┬─────────┐
-        │              │ Flyway  │ Atlas   │ Bytebase │ You     │
-        ├──────────────┼─────────┼─────────┼──────────┼─────────┤
-        │ Multi-svc    │ ✗       │ partial │ ✗        │ ✓ core  │
-        │ Platform eng │ ✗       │ ✗       │ ✓        │ ✓       │
-        │ Zero-config  │ ✗       │ ✓       │ ✗        │ ✓       │
-        └──────────────┴─────────┴─────────┴──────────┴─────────┘
-
-        Whitespace found: nobody owns "multi-service schema
-        coordination." That's your lane.
-
-You:    /forbotsake-icp
-
-Claude: [researches platform engineering communities, content habits,
-         daily workflows, pain triggers]
-
-        Your buyer: Senior Platform Engineer, 3-7 YOE, mass hiring org.
-        They mass-approve PRs on Fridays. Schema breaks hit Monday morning.
-        They read: platformengineering.org, r/kubernetes, KubeCon recaps.
-        They trust: peer recommendations in Slack, not blog posts.
-        → Content that works: war stories, incident post-mortems, demos.
-        → Content that fails: "10 best practices" listicles.
-
-You:    /forbotsake-content-plan
-
-Claude: 4-week calendar based on your capacity (5 hrs/week):
-
-        Week 1: "The Monday Morning Schema Fire" — X thread + HN post
-        Week 2: "Why we stopped using Flyway at 80 services" — blog
-        Week 3: Live demo in Platform Engineering Slack
-        Week 4: PlatformCon CFP submission + LinkedIn post
-
-You:    /forbotsake-create — write the Week 1 X thread
-
-Claude: [reads your strategy, ICP, competitor whitespace, channel format]
-
-        Thread draft (7 tweets):
-        1/ Every Monday at 9am, platform teams play the same game:
-           "which schema change broke staging this time?"
-           After managing migrations across 120 services, I built
-           the tool I wished existed. Here's what I learned 🧵
-        [... 6 more tweets, each with a specific technical insight,
-         ending with a soft CTA to the GitHub repo]
-
-You:    /forbotsake-content-check
-
-Claude: Brand voice: PASS — technical, specific, no marketing fluff.
-        Messaging alignment: PASS — hits "coordination" angle, not "migration."
-        Channel fit: PASS — thread length right for X, hook is specific.
-        CTA: NEEDS REVISION — "check it out" is weak.
-        → Suggested: "If you manage >10 services, try it on one.
-           5 minutes. No config. Star if it saves your Monday."
-
-        Verdict: READY TO PUBLISH (after CTA fix)
-
-You:    /forbotsake-publish
-
-Claude: [opens X via Chrome, posts the thread, logs the publish event]
-        Published: x.com/you/status/18294...
-        Logged to publish-log.md for retro tracking.
-
-You:    /forbotsake-retro  (one week later)
-
-Claude: Week 1 results:
-        - X thread: 12K impressions, 340 likes, 28 replies, 47 new stars
-        - Best performing tweet: #3 (the "Flyway breaks at 40 services" one)
-        - 4 DMs from platform engineers asking about enterprise support
-
-        Recommendation: Double down on "war story" format.
-        Drop the blog post — your audience lives on X and Slack, not blogs.
-        Week 2 pivot: turn the DM conversations into a case study thread.
+```text
+UNDERSTAND -> CHALLENGE -> RESEARCH -> PLAN -> SHARPEN -> CREATE -> REVIEW -> SHIP -> MEASURE
 ```
 
-You said "I should probably tweet about it." Nine skills later, you have positioning that competitors can't copy, content your audience actually wants, and data showing what works. That's not a tweet scheduler. That's a marketing team.
+| Stage | Command | What it does |
+|---|---|---|
+| Understand | `/forbotsake-marketing-start` | Build strategy.md, founder-profile.md, brand.md |
+| Challenge | `/forbotsake-cmo-check` | Attack your strategy and tighten it |
+| Research | `/forbotsake-spy` | Analyze competitors and whitespace |
+| Research | `/forbotsake-icp` | Deep audience research |
+| Plan | `/forbotsake-content-plan` | Build channel and content plan |
+| Sharpen | `/forbotsake-sharpen` | Go deep on one target or account |
+| Create | `/forbotsake-create` | Write actual content and assets |
+| Review | `/forbotsake-content-check` | Catch slop, drift, weak hooks, weak CTA |
+| Ship | `/forbotsake-publish` | Format or publish approved content |
+| Measure | `/forbotsake-retro` | Review what worked and what to change |
 
-## Autopilot Mode
+## Proof, not theory
 
-Make your content post itself. No active session needed.
+This repo already contains:
+- strategy artifacts
+- competitor analysis
+- ICP profiles
+- launch content drafts
+- outreach systems
+- automated review gates
 
-```bash
-# In Claude Code:
-/forbotsake-cron install
-```
+If you want to inspect the shape of the outputs first:
+- [examples/what-you-get-in-10-minutes.md](examples/what-you-get-in-10-minutes.md)
+- [docs/repo-positioning-notes.md](docs/repo-positioning-notes.md)
+- [docs/repo-launch-week-plan.md](docs/repo-launch-week-plan.md)
 
-A cron job runs every 30 minutes. It reads your `content-calendar.md`, checks if any reviewed content is due, and posts it via Chrome automatically. Your laptop must be awake with Chrome running.
+## Launch principle
 
-**Prerequisites:**
-- Reviewed content (run the pipeline first)
-- `content-calendar.md` with `scheduled_datetime` column (ISO 8601, e.g., `2026-04-07T10:00:00-07:00`)
-- Chrome open with Claude for Chrome extension
+A technical founder should be able to look at this repo and immediately think:
 
-**Commands:**
-```
-/forbotsake-cron install    # enable autopilot
-/forbotsake-cron status     # see what's scheduled, what posted
-/forbotsake-cron pause      # temporarily stop
-/forbotsake-cron resume     # start again
-/forbotsake-cron doctor     # diagnose issues
-/forbotsake-cron run-now    # force one post immediately
-/forbotsake-cron uninstall  # disable autopilot
-```
+“I know exactly why this exists.
+I know who it is for.
+I know what I would get if I ran it.
+I know why this is different from generic AI marketing slop.”
 
-**How it works:** `bin/forbotsake-cron` checks the calendar every 30 min (no Claude tokens spent when nothing is due). When a post is due, it launches `claude -p --chrome` which connects to your Chrome browser and posts via the same UI you'd use manually. Reviewed content only. Draft content is never posted.
-
-## How it works
-
-Each skill is a SKILL.md file that Claude Code reads and follows. Skills read your codebase (README, git log) to understand your product before asking questions. Outputs are markdown files in your project root.
-
-Key outputs:
-- `strategy.md` — your marketing strategy (positioning, ICP, channels, messaging)
-- `brand.md` — visual identity (colors, typography, mood, image style)
-- `media-providers.md` — available visual generation backends (auto-detected)
-- `competitor-analysis.md` — competitor messaging matrix
-- `icp-profile.md` — ideal customer profile
-- `content-calendar.md` — what to post, where, when (with visual treatment suggestions)
-- `content/*-visual-*.png` — generated images and text-cards alongside content
-
-## Multi-modal visual generation
-
-forbotsake generates images and video alongside text content. The AI decides which posts need visuals based on your strategy and channel norms.
-
-**How it works:**
-1. `/forbotsake-marketing-start` creates `brand.md` with your visual identity (colors, style, mood)
-2. `/forbotsake-create` decides the visual treatment per post (none / text-card / ai-image / video)
-3. Generates the visual using the best available provider (local text-cards, Gemini browser, API)
-4. `/forbotsake-publish` attaches visuals when posting to platforms
-
-**Providers (auto-detected):**
-| Provider | Type | Cost | Requires |
-|----------|------|------|----------|
-| local-satori | Text-cards | Free | bun or node |
-| gemini-browser | AI images | Free (with Google sub) | Claude for Chrome |
-| nano-banana-api | AI images | ~$0.04/image | API key |
-| veo-browser | Video | Free (with Google sub) | Claude for Chrome |
-| seedance-api | Video | Per-use | API key |
-
-No provider configured? No problem. forbotsake saves the visual prompt in your content file's frontmatter for manual generation later.
-
-## Quality Gates (Adversarial Review)
-
-forbotsake doesn't trust its own output. Three adversarial review gates catch bad content before it goes public:
-
-| Gate | Where | What it catches | Verdict |
-|------|-------|----------------|---------|
-| Strategy Reviewer | `/forbotsake-marketing-start` | Vague positioning, generic ICPs, unjustified channel scores | PASS / NEEDS_REVISION |
-| Content Red Team | `/forbotsake-content-check` | AI-slop patterns, wrong voice, weak originality | PASS / SOFT_FAIL / HARD_FAIL |
-| Publish Kill Switch | `/forbotsake-publish` | Embarrassment risk, factual claims, banned patterns | GO / HOLD |
-
-Gates 1 and 2 use independent reviewer subagents with fresh context that can't see the conversation that produced the content. Gate 3 is a lightweight inline check (not a subagent) for final sanity before publishing.
-
-**Fast mode:** Set `FORBOTSAKE_FAST=1` to skip gates during rapid iteration.
-
-**Custom patterns:** Add banned patterns to `~/.forbotsake/banned-patterns.md`. Defaults ship with forbotsake and are upgrade-safe.
-
-**Metrics:** Gate results log to `~/.forbotsake/review-metrics.jsonl` for `/forbotsake-retro`.
-
-## Methodology
-
-forbotsake encodes a 5-step marketing judgment framework. See [ETHOS.md](ETHOS.md) for the full methodology.
-
-1. Problem/Solution Clarity
-2. ICP Definition via Elimination
-3. Channel-Market Fit Scoring
-4. Messaging Hierarchy Construction
-5. Distribution Priority Stack-Rank
-
-## Upgrading
-
-Type `/forbotsake-upgrade` in Claude Code. It detects your install type, pulls the latest version, and shows what changed.
-
-Or manually:
-```bash
-cd ~/.claude/skills/forbotsake && git pull && bash bin/sync-links.sh
-```
-
-Every forbotsake skill checks for updates automatically. When a new version is available, you'll see a notice before the skill runs. Your strategy.md and other output files live in your project, not in the plugin directory. Upgrades are safe.
-
-## Troubleshooting
-
-**Skills not showing up after install?**
-Run: `bash ~/.claude/skills/forbotsake/bin/sync-links.sh`
-This creates the symlinks Claude Code needs to discover skills.
-
-**`/forbotsake-*` commands not found?**
-Start a new Claude Code session after installing. Skills are loaded at session start.
-
-**Verify installation:**
-Run: `bash ~/.claude/skills/forbotsake/bin/sync-links.sh --check`
-
-**Uninstall:**
-Run: `bash ~/.claude/skills/forbotsake/bin/uninstall.sh`
+If the repo does not create that reaction, the repo is still under-positioned.
 
 ## Contributing
 
-Found a bug? Have a skill idea? [Open an issue](https://github.com/forbotsake/forbotsake/issues).
+Found a bug or have a skill idea?
+Open an issue.
 
-Pull requests welcome. forbotsake skills are pure markdown — if you can write a prompt, you can contribute.
+Pull requests are welcome.
+forbotsake skills are markdown-heavy by design.
+If you can write sharp prompts and sharp workflows, you can contribute.
 
 ## License
 

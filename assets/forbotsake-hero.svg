@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" fill="none">
+  <rect width="1280" height="720" fill="#0B1020"/>
+  <rect x="64" y="60" width="1152" height="600" rx="24" fill="#121933" stroke="#2A3565"/>
+  <text x="96" y="128" fill="#F8FAFC" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700">forbotsake</text>
+  <text x="96" y="168" fill="#93C5FD" font-family="Arial, Helvetica, sans-serif" font-size="24">You built the product. Now build the go-to-market system.</text>
+
+  <rect x="96" y="214" width="320" height="360" rx="18" fill="#0F172A" stroke="#334155"/>
+  <text x="118" y="252" fill="#F8FAFC" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">Input</text>
+  <text x="118" y="292" fill="#CBD5E1" font-family="Arial, Helvetica, sans-serif" font-size="20">repo + founder context</text>
+  <text x="118" y="328" fill="#CBD5E1" font-family="Arial, Helvetica, sans-serif" font-size="20">launch page + rough story</text>
+  <text x="118" y="364" fill="#CBD5E1" font-family="Arial, Helvetica, sans-serif" font-size="20">current channels + pain</text>
+
+  <rect x="480" y="214" width="320" height="360" rx="18" fill="#111827" stroke="#334155"/>
+  <text x="502" y="252" fill="#F8FAFC" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">Workflow</text>
+  <text x="502" y="292" fill="#FDE68A" font-family="Arial, Helvetica, sans-serif" font-size="20">understand</text>
+  <text x="502" y="326" fill="#FDE68A" font-family="Arial, Helvetica, sans-serif" font-size="20">challenge</text>
+  <text x="502" y="360" fill="#FDE68A" font-family="Arial, Helvetica, sans-serif" font-size="20">research</text>
+  <text x="502" y="394" fill="#FDE68A" font-family="Arial, Helvetica, sans-serif" font-size="20">plan + sharpen</text>
+  <text x="502" y="428" fill="#FDE68A" font-family="Arial, Helvetica, sans-serif" font-size="20">create + review</text>
+  <text x="502" y="462" fill="#FDE68A" font-family="Arial, Helvetica, sans-serif" font-size="20">ship + measure</text>
+
+  <rect x="864" y="214" width="320" height="360" rx="18" fill="#0F172A" stroke="#334155"/>
+  <text x="886" y="252" fill="#F8FAFC" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">Output</text>
+  <text x="886" y="292" fill="#86EFAC" font-family="Arial, Helvetica, sans-serif" font-size="20">strategy.md</text>
+  <text x="886" y="326" fill="#86EFAC" font-family="Arial, Helvetica, sans-serif" font-size="20">competitor-analysis.md</text>
+  <text x="886" y="360" fill="#86EFAC" font-family="Arial, Helvetica, sans-serif" font-size="20">icp-profile.md</text>
+  <text x="886" y="394" fill="#86EFAC" font-family="Arial, Helvetica, sans-serif" font-size="20">content-calendar.md</text>
+  <text x="886" y="428" fill="#86EFAC" font-family="Arial, Helvetica, sans-serif" font-size="20">outreach + launch assets</text>
+  <text x="886" y="462" fill="#86EFAC" font-family="Arial, Helvetica, sans-serif" font-size="20">repeatable GTM system</text>
+
+  <path d="M426 394C446 394 454 394 470 394" stroke="#60A5FA" stroke-width="6" stroke-linecap="round"/>
+  <path d="M810 394C830 394 838 394 854 394" stroke="#60A5FA" stroke-width="6" stroke-linecap="round"/>
+
+  <text x="96" y="626" fill="#94A3B8" font-family="Arial, Helvetica, sans-serif" font-size="22">Open source GTM workflow for technical founders with real products and weak traction.</text>
+</svg>

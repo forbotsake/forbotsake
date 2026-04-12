@@ -10,6 +10,8 @@ Now build the go-to-market system.
 
 ![forbotsake hero](assets/forbotsake-hero.svg)
 
+![forbotsake proof map](assets/forbotsake-proof-output-map.svg)
+
 forbotsake turns a repo, a rough launch story, and a founder's context into:
 - sharper positioning
 - clearer ICP
@@ -55,6 +57,8 @@ You get working GTM artifacts.
   - actual posts, threads, emails, launch copy
 
 See a concrete walkthrough in [examples/what-you-get-in-10-minutes.md](examples/what-you-get-in-10-minutes.md).
+
+If you want the fastest proof of what changes between before and after, start with [examples/proof-demo.md](examples/proof-demo.md).
 
 ## Who this is for
 
@@ -162,6 +166,7 @@ This repo already contains:
 - automated review gates
 
 If you want to inspect the shape of the outputs first:
+- [examples/proof-demo.md](examples/proof-demo.md)
 - [examples/what-you-get-in-10-minutes.md](examples/what-you-get-in-10-minutes.md)
 - [docs/repo-positioning-notes.md](docs/repo-positioning-notes.md)
 - [docs/repo-launch-week-plan.md](docs/repo-launch-week-plan.md)
